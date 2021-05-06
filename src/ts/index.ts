@@ -1,2 +1,2 @@
 import "./main";
-import "./auth";
+import "./includes/auth";
