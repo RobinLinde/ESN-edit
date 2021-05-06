@@ -1,13 +1,15 @@
 {
   "name": "esn-edit",
   "scripts": {
-    "start": "parcel serve ./src/index.html",
-    "build": "parcel build ./src/index.html"
-  },
-  "devDependencies": {
-    "parcel": "^2.0.0-beta.2"
+    "start": "parcel serve ./src/*.html",
+    "build": "parcel build ./src/*.html"
   },
   "dependencies": {
-    "bootstrap": "^5.0.0"
+    "bootstrap": "5.0.0",
+    "osm-auth": "1.1.0"
+  },
+  "devDependencies": {
+    "@parcel/transformer-sass": "2.0.0-beta.2",
+    "parcel": "2.0.0-beta.2"
   }
 }
