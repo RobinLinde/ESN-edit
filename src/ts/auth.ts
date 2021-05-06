@@ -1,6 +1,6 @@
 var osmAuth = require("osm-auth");
 
-var auth = osmAuth({
+export var auth = osmAuth({
   oauth_consumer_key: "F7e3Wych4ZlxdlIiJCgZSTI4N0r5jme3FaGV4HLt",
   oauth_secret: "fyTkz3W3Fuvu5C4xTKw1Z9B9iX1QiwtFJSa0JimZ",
   url: "https://master.apis.dev.openstreetmap.org",
@@ -34,4 +34,5 @@ update();
 logoutLink.onclick = (ev: Event) => {
   auth.logout();
   update();
+  window.location.replace("/");
 };
