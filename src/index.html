@@ -23,7 +23,10 @@
           </button>
           <div class="navbar-collapse collapse" id="navbarCollapse">
             <ul class="mb-2 mb-md-0 ms-auto navbar-nav">
-              <li class="nav-item">
+              <li class="nav-item" id="login-item">
+                <a class="nav-link" id="login-link">Login with OSM</a>
+              </li>
+              <li class="nav-item" id="logout-item">
                 <a class="nav-link" id="logout-link">Logout</a>
               </li>
             </ul>
@@ -33,13 +36,7 @@
     </header>
     <main>
       <div class="container">
-        <p>
-          First, make sure you are logged in to OSM and Wikidata using the
-          buttons below.
-        </p>
-        <button type="button" class="btn btn-primary" id="osm-authenticate">
-          OSM</button
-        ><button type="button" class="btn btn-primary">Wikidata</button>
+        <p>Welcome to ESNedit!</p>
       </div>
     </main>
     <script src="./ts/index.ts"></script>
