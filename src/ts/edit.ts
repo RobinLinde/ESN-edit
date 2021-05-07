@@ -22,6 +22,8 @@ var id = urlParams.get("id");
 
 var table = document.getElementById("tagTable");
 
+var originalObject;
+
 if (itemTypes.includes(type) && id) {
   auth.xhr(
     {
@@ -35,6 +37,7 @@ if (itemTypes.includes(type) && id) {
 function showWays(err, res: XMLDocument) {
   if (!err) {
     const tags = res.getElementsByTagName("tag");
+    originalObject = res;
     var tagList = {};
     for (var i = 0; i < tags.length; i++) {
       var tag = tags[i].attributes;
@@ -62,12 +65,11 @@ function showWays(err, res: XMLDocument) {
       const requestData = request.response;
       const results = requestData.search;
       const dropdown = document.getElementById("wikidata-select");
-      console.log(results);
 
       for (var i = 0; i < results.length; i++) {
         var option = document.createElement("option");
         option.text = results[i].label + " (" + results[i].description + ")";
-        option.value = results[i].i;
+        option.value = results[i].id;
         dropdown.appendChild(option);
       }
     };
@@ -79,6 +81,7 @@ document.getElementById("addButton").onclick = (ev: Event) => {
     {
       method: "PUT",
       path: "/api/0.6/changeset/create",
+      options: { header: { "Content-Type": "text/xml" } },
       content:
         '<osm><changeset><tag k="created_by" v="ESN-edit 0.0.1"/><tag k="comment" v="Add etymology"/></changeset></osm>',
     },
@@ -86,6 +89,58 @@ document.getElementById("addButton").onclick = (ev: Event) => {
   );
 };
 
+var changesetId;
 function addItems(err, res) {
-  console.log(new XMLSerializer().serializeToString(res));
+  if (!err) {
+    changesetId = res;
+    console.log("Changeset number: " + changesetId);
+    var changesetContent: XMLDocument = originalObject;
+    var dropdown = <HTMLInputElement>document.getElementById("wikidata-select");
+    changesetContent.children[0].children[0].setAttribute(
+      "changeset",
+      changesetId
+    );
+    console.log(changesetContent);
+    var changesetXML = new XMLSerializer().serializeToString(
+      changesetContent.documentElement
+    );
+    changesetXML = changesetXML.replace(
+      "</" + type + ">",
+      '<tag k="name:etymology:wikidata" v="' +
+        dropdown.value +
+        '"/></' +
+        type +
+        ">"
+    );
+    console.log(changesetXML);
+    auth.xhr(
+      {
+        method: "PUT",
+        path: "/api/0.6/" + type + "/" + id,
+        options: { header: { "Content-Type": "text/xml" } },
+        content: changesetXML,
+      },
+      closeChangeset
+    );
+  }
+}
+
+function closeChangeset(err, res) {
+  if (!err) {
+    auth.xhr(
+      {
+        method: "PUT",
+        path: "/api/0.6/changeset/" + changesetId + "/close",
+      },
+      giveFeedback
+    );
+  }
+}
+
+function giveFeedback(err, res) {
+  if (!err) {
+    console.log(res);
+  } else {
+    console.log(err);
+  }
 }
