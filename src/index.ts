@@ -12,6 +12,14 @@ const loginLink = document.getElementById("login-link");
 const logoutItem = document.getElementById("logout-item");
 const logoutLink = document.getElementById("logout-link");
 
+// Editor parameters
+const queryString = window.location.search;
+const urlParams = new URLSearchParams(queryString);
+const itemTypes = ["relation", "way"];
+var type = urlParams.get("type");
+var id = urlParams.get("id");
+var table = document.getElementById("tagTable");
+
 // Authentication
 var osmAuth = require("osm-auth");
 
@@ -21,6 +29,7 @@ var auth = osmAuth({
   url: "https://master.apis.dev.openstreetmap.org",
 });
 
+// Login link
 loginLink.onclick = (ev: Event) => {
   if (!auth.bringPopupWindowToFront()) {
     auth.authenticate(function () {
@@ -37,6 +46,12 @@ function update() {
     logoutItem.style.display = "block";
 
     alertBox.style.display = "none";
+
+    if (type && id) {
+      getElement(type, id);
+    } else {
+      searchInterface.style.display = "block";
+    }
   } else {
     // User logged out
     loginItem.style.display = "block";
@@ -80,28 +95,6 @@ function setOption(selectElement: HTMLSelectElement, value) {
     }
   }
   return false;
-}
-
-// Logged out on load
-if (!auth.authenticated()) {
-  alertBox.innerText = "You're not logged in yet, please log in to continue";
-  alertBox.style.display = "block";
-}
-
-// Show editor if logged in and query given
-const queryString = window.location.search;
-const urlParams = new URLSearchParams(queryString);
-const itemTypes = ["relation", "way"];
-var type = urlParams.get("type");
-var id = urlParams.get("id");
-var table = document.getElementById("tagTable");
-
-if (auth.authenticated()) {
-  if (type && id) {
-    getElement(type, id);
-  } else {
-    searchInterface.style.display = "block";
-  }
 }
 
 // Get element
