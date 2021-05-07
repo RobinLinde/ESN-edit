@@ -1,8 +1,8 @@
 {
   "name": "esn-edit",
   "scripts": {
-    "start": "parcel serve ./src/index.html ./src/edit.html",
-    "build": "parcel build ./src/index.html ./src/edit.html"
+    "start": "parcel serve ./src/index.html ./src/land.html",
+    "build": "parcel build ./src/index.html ./src/land.html"
   },
   "dependencies": {
     "bootstrap": "5.0.0",

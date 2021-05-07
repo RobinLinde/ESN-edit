@@ -1,0 +1,17 @@
+@import "/node_modules/bootstrap/scss/bootstrap.scss";
+
+main {
+  padding-top: 80px;
+}
+
+#mainAlert {
+  display: none;
+}
+
+#editorInterface {
+  display: none;
+}
+
+#searchInterface {
+  display: none;
+}

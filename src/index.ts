@@ -1,41 +1,127 @@
-import "./main";
-import { auth } from "./includes/auth";
-import { stripName } from "./includes/name";
+import "bootstrap/js/dist/collapse";
 
+// Main elements
+var alertBox = document.getElementById("mainAlert");
+
+var editorInterface = document.getElementById("editorInterface");
+var searchInterface = document.getElementById("searchInterface");
+
+const loginItem = document.getElementById("login-item");
+const loginLink = document.getElementById("login-link");
+
+const logoutItem = document.getElementById("logout-item");
+const logoutLink = document.getElementById("logout-link");
+
+// Authentication
+var osmAuth = require("osm-auth");
+
+var auth = osmAuth({
+  oauth_consumer_key: "F7e3Wych4ZlxdlIiJCgZSTI4N0r5jme3FaGV4HLt",
+  oauth_secret: "fyTkz3W3Fuvu5C4xTKw1Z9B9iX1QiwtFJSa0JimZ",
+  url: "https://master.apis.dev.openstreetmap.org",
+});
+
+loginLink.onclick = (ev: Event) => {
+  if (!auth.bringPopupWindowToFront()) {
+    auth.authenticate(function () {
+      update();
+    });
+  }
+};
+
+// Update page based on auth state
+function update() {
+  if (auth.authenticated()) {
+    // User logged in
+    loginItem.style.display = "none";
+    logoutItem.style.display = "block";
+
+    alertBox.style.display = "none";
+  } else {
+    // User logged out
+    loginItem.style.display = "block";
+    logoutItem.style.display = "none";
+
+    alertBox.innerText = "You're not logged in yet, please log in to continue";
+    alertBox.style.display = "block";
+
+    editorInterface.style.display = "none";
+    searchInterface.style.display = "none";
+  }
+}
+update();
+
+// Logout link
+logoutLink.onclick = (ev: Event) => {
+  auth.logout();
+  update();
+};
+
+// Wikibase
 const WBK = require("wikibase-sdk");
 const wbk = WBK({
   instance: "https://www.wikidata.org",
   sparqlEndpoint: "https://query.wikidata.org/sparql",
 });
 
-if (!auth.authenticated()) {
-  window.location.replace("/");
+// Name Stripper
+function stripName(name: String) {
+  var output = name.replace("laan", "");
+  return output;
 }
 
+// Option selector
+function setOption(selectElement: HTMLSelectElement, value) {
+  var options = selectElement.options;
+  for (var i = 0, optionsLength = options.length; i < optionsLength; i++) {
+    if (options[i].value == value) {
+      selectElement.selectedIndex = i;
+      return true;
+    }
+  }
+  return false;
+}
+
+// Logged out on load
+if (!auth.authenticated()) {
+  alertBox.innerText = "You're not logged in yet, please log in to continue";
+  alertBox.style.display = "block";
+}
+
+// Show editor if logged in and query given
 const queryString = window.location.search;
 const urlParams = new URLSearchParams(queryString);
-
 const itemTypes = ["relation", "way"];
 var type = urlParams.get("type");
-
 var id = urlParams.get("id");
-
 var table = document.getElementById("tagTable");
 
-var originalObject;
-
-if (itemTypes.includes(type) && id) {
-  auth.xhr(
-    {
-      method: "GET",
-      path: "/api/0.6/" + type + "/" + id,
-    },
-    showWays
-  );
+if (auth.authenticated()) {
+  if (type && id) {
+    getElement(type, id);
+  } else {
+    searchInterface.style.display = "block";
+  }
 }
 
-function showWays(err, res: XMLDocument) {
+// Get element
+function getElement(type: string, id) {
+  if (itemTypes.includes(type) && id) {
+    auth.xhr(
+      {
+        method: "GET",
+        path: "/api/0.6/" + type + "/" + id,
+      },
+      showElement
+    );
+  }
+}
+
+// Show element
+var originalObject; // Make originalObject global
+function showElement(err, res: XMLDocument) {
   if (!err) {
+    editorInterface.style.display = "block";
     const tags = res.getElementsByTagName("tag");
     originalObject = res;
     var tagList = {};
@@ -64,7 +150,9 @@ function showWays(err, res: XMLDocument) {
     request.onload = function () {
       const requestData = request.response;
       const results = requestData.search;
-      const dropdown = document.getElementById("wikidata-select");
+      const dropdown = <HTMLSelectElement>(
+        document.getElementById("wikidata-select")
+      );
 
       for (var i = 0; i < results.length; i++) {
         var option = document.createElement("option");
@@ -72,10 +160,16 @@ function showWays(err, res: XMLDocument) {
         option.value = results[i].id;
         dropdown.appendChild(option);
       }
+      if ("name:etymology:wikidata" in tagList) {
+        if (!setOption(dropdown, tagList["name:etymology:wikidata"])) {
+          alert("Problem with Wikidata");
+        }
+      }
     };
   }
 }
 
+// Create changeset on button click
 document.getElementById("addButton").onclick = (ev: Event) => {
   auth.xhr(
     {
@@ -90,6 +184,7 @@ document.getElementById("addButton").onclick = (ev: Event) => {
 };
 
 var changesetId;
+
 function addItems(err, res) {
   if (!err) {
     changesetId = res;

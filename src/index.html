@@ -2,8 +2,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>ESNedit</title>
-    <link href="./scss/index.scss" rel="stylesheet" />
+    <title>ESNedit - Edit</title>
+    <link href="./index.scss" rel="stylesheet" />
   </head>
   <body>
     <header>
@@ -36,21 +36,35 @@
     </header>
     <main>
       <div class="container">
-        <p>Welcome to ESNedit!</p>
-        <form action="./edit.html" method="GET">
-          <div class="mb-3">
-            <label for="idInput" class="form-label">ID</label>
-            <input
-              type="number"
-              class="form-control"
-              id="idInput"
-              name="id"
-              placeholder="4305722045"
-            />
-          </div>
+        <div class="alert alert-primary" role="alert" id="mainAlert"></div>
+      </div>
+      <div class="container" id="searchInterface">
+        <form method="GET">
+          <select class="form-select" name="type">
+            <option value="way">Way</option>
+            <option value="relation">Relation</option>
+          </select>
+          <input
+            type="number"
+            class="form-control"
+            id="idInput"
+            name="id"
+            placeholder="Fill in an ID"
+          />
+          <button type="submit" class="btn btn-primary mb-3">Edit</button>
         </form>
       </div>
+      <div class="container" id="editorInterface">
+        <table id="tagTable">
+          <th>Key</th>
+          <th>Value</th>
+        </table>
+        <select class="form-select" id="wikidata-select"></select>
+        <button type="button" class="btn btn-primary" id="addButton">
+          Submit edit
+        </button>
+      </div>
     </main>
-    <script src="./ts/index.ts"></script>
+    <script src="./index.ts"></script>
   </body>
 </html>
