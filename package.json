@@ -1,5 +1,25 @@
 {
   "name": "esn-edit",
+  "version": "0.0.1",
+  "description": "OpenStreetMap editor, for name etymology. Designed as an editor for the EqualStreetNames project.",
+  "keywords": [
+    "osm",
+    "equalstreetnames",
+    "editor"
+  ],
+  "homepage": "https://github.com/RobinLinde/ESN-edit",
+  "bugs": {
+    "url": "https://github.com/RobinLinde/ESN-edit"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Robin van der Linde",
+    "url": "https://rlin.eu/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RobinLinde/ESN-edit.git"
+  },
   "scripts": {
     "start": "parcel serve ./src/index.html ./src/land.html",
     "build": "parcel build ./src/index.html ./src/land.html"
