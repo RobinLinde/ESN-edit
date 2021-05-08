@@ -7,7 +7,6 @@
   "dependencies": {
     "bootstrap": "5.0.0",
     "osm-auth": "1.1.0",
-    "wikibase-sdk": "7.12.0",
     "xml2js": "^0.4.23"
   },
   "devDependencies": {

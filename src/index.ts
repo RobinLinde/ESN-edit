@@ -1,5 +1,8 @@
 import "bootstrap/js/dist/collapse";
 
+var parseString = require("xml2js").parseString;
+var xml2js = require("xml2js");
+
 // Main elements
 var alertBox = document.getElementById("mainAlert");
 
@@ -72,13 +75,6 @@ logoutLink.onclick = (ev: Event) => {
   update();
 };
 
-// Wikibase
-const WBK = require("wikibase-sdk");
-const wbk = WBK({
-  instance: "https://www.wikidata.org",
-  sparqlEndpoint: "https://query.wikidata.org/sparql",
-});
-
 // Name Stripper
 function stripName(name: String) {
   var output = name.replace("laan", "");
@@ -112,11 +108,22 @@ function getElement(type: string, id) {
 
 // Show element
 var originalObject; // Make originalObject global
+var originalXMLasObject;
 function showElement(err, res: XMLDocument) {
   if (!err) {
     editorInterface.style.display = "block";
     const tags = res.getElementsByTagName("tag");
     originalObject = res;
+
+    parseString(
+      new XMLSerializer().serializeToString(originalObject.documentElement),
+      function (err, result) {
+        if (!err) {
+          originalXMLasObject = result;
+        }
+      }
+    );
+
     var tagList = {};
     for (var i = 0; i < tags.length; i++) {
       var tag = tags[i].attributes;
@@ -134,7 +141,10 @@ function showElement(err, res: XMLDocument) {
       tr.appendChild(valtd);
     }
 
-    const url = wbk.searchEntities(stripName(tagList["name"]));
+    const url =
+      "https://www.wikidata.org/w/api.php?action=wbsearchentities&search=" +
+      stripName(tagList["name"]) +
+      "&language=en&limit=20&continue=0&format=json&uselang=en&type=item&origin=*";
     let request = new XMLHttpRequest();
     request.open("GET", url);
     request.responseType = "json";
@@ -159,5 +169,96 @@ function showElement(err, res: XMLDocument) {
         }
       }
     };
+  }
+}
+
+// Function to set the wikidata value of object
+function setWikidata(wikidata) {
+  for (var i = 0; i < originalXMLasObject["osm"][type][0]["tag"].length; i++) {
+    if (
+      originalXMLasObject["osm"][type][0]["tag"][i]["$"]["k"] ==
+      "name:etymology:wikidata"
+    ) {
+      // Wikidata entry already exists
+      var wikidataNumber = i;
+    }
+  }
+  if (wikidataNumber) {
+    // Update existing one
+    originalXMLasObject["osm"][type][0]["tag"][wikidataNumber]["$"][
+      "v"
+    ] = wikidata;
+  } else {
+    // Create new one
+    var key = { $: { k: "name:etymology:wikidata", v: wikidata } };
+    originalXMLasObject["osm"][type][0]["tag"].push(key);
+  }
+}
+
+// Create changeset on button click
+document.getElementById("addButton").onclick = (ev: Event) => {
+  auth.xhr(
+    {
+      method: "PUT",
+      path: "/api/0.6/changeset/create",
+      options: { header: { "Content-Type": "text/xml" } },
+      content:
+        '<osm><changeset><tag k="created_by" v="ESN-edit 0.0.1"/><tag k="comment" v="Add etymology #equalstreetnames"/></changeset></osm>',
+    },
+    updateObjects
+  );
+};
+
+var changesetId;
+function updateObjects(err, res) {
+  if (!err) {
+    // Get Changeset ID
+    changesetId = res;
+    console.log("Changeset number: " + changesetId);
+
+    // Set WikiData value
+    var dropdown = <HTMLInputElement>document.getElementById("wikidata-select");
+    setWikidata(dropdown.value);
+
+    // Set changeset id
+    originalXMLasObject["osm"][type][0]["$"]["changeset"] = changesetId;
+
+    // Prepare XML
+    var builder = new xml2js.Builder();
+    var changesetXML = builder.buildObject(originalXMLasObject);
+
+    // Update object
+    auth.xhr(
+      {
+        method: "PUT",
+        path: "/api/0.6/" + type + "/" + id,
+        options: { header: { "Content-Type": "text/xml" } },
+        content: changesetXML,
+      },
+      closeChangeset
+    );
+  }
+}
+
+// Function to close the changeset
+function closeChangeset(err, res) {
+  if (!err) {
+    auth.xhr(
+      {
+        method: "PUT",
+        path: "/api/0.6/changeset/" + changesetId + "/close",
+      },
+      giveFeedback
+    );
+  }
+}
+
+// Give some feedback to the user
+// TODO: show some visual feedback
+function giveFeedback(err, res) {
+  if (!err) {
+    console.log(res);
+  } else {
+    console.log(err);
   }
 }
