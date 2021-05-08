@@ -61,6 +61,7 @@ function update() {
     logoutItem.style.display = "none";
 
     alertBox.innerText = "You're not logged in yet, please log in to continue";
+    alertBox.className = "alert alert-primary";
     alertBox.style.display = "block";
 
     editorInterface.style.display = "none";
@@ -125,6 +126,7 @@ function showElement(err, res: XMLDocument) {
     );
 
     var tagList = {};
+    table.innerHTML = "";
     for (var i = 0; i < tags.length; i++) {
       var tag = tags[i].attributes;
       tagList[tag.getNamedItem("k").value] = tag.getNamedItem("v").value;
@@ -169,6 +171,10 @@ function showElement(err, res: XMLDocument) {
         }
       }
     };
+  } else {
+    alertBox.innerText = "Error: " + err;
+    alertBox.className = "alert alert-danger";
+    alertBox.style.display = "block";
   }
 }
 
@@ -237,6 +243,10 @@ function updateObjects(err, res) {
       },
       closeChangeset
     );
+  } else {
+    alertBox.innerText = "Error: " + err;
+    alertBox.className = "alert alert-danger";
+    alertBox.style.display = "block";
   }
 }
 
@@ -250,15 +260,29 @@ function closeChangeset(err, res) {
       },
       giveFeedback
     );
+  } else {
+    alertBox.innerText = "Error: " + err;
+    alertBox.className = "alert alert-danger";
+    alertBox.style.display = "block";
   }
 }
 
 // Give some feedback to the user
-// TODO: show some visual feedback
 function giveFeedback(err, res) {
   if (!err) {
-    console.log(res);
+    alertBox.innerHTML =
+      'Success, your changes are uploaded in changeset <a href="https://master.apis.dev.openstreetmap.org/changeset/' +
+      changesetId +
+      '" class="alert-link" target="_blank">' +
+      changesetId +
+      "</a>.";
+    alertBox.className = "alert alert-success";
+    alertBox.style.display = "block";
+
+    getElement(type, id);
   } else {
-    console.log(err);
+    alertBox.innerText = "Error: " + err;
+    alertBox.className = "alert alert-danger";
+    alertBox.style.display = "block";
   }
 }
