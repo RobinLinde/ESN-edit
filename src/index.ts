@@ -23,13 +23,15 @@ var type = urlParams.get("type");
 var id = urlParams.get("id");
 var table = document.getElementById("tagTable");
 
+const baseUrl = "https://master.apis.dev.openstreetmap.org";
+
 // Authentication
 var osmAuth = require("osm-auth");
 
 var auth = osmAuth({
   oauth_consumer_key: "F7e3Wych4ZlxdlIiJCgZSTI4N0r5jme3FaGV4HLt",
   oauth_secret: "fyTkz3W3Fuvu5C4xTKw1Z9B9iX1QiwtFJSa0JimZ",
-  url: "https://master.apis.dev.openstreetmap.org",
+  url: baseUrl,
 });
 
 // Login link
@@ -271,7 +273,9 @@ function closeChangeset(err, res) {
 function giveFeedback(err, res) {
   if (!err) {
     alertBox.innerHTML =
-      'Success, your changes are uploaded in changeset <a href="https://master.apis.dev.openstreetmap.org/changeset/' +
+      'Success, your changes are uploaded in changeset <a href="' +
+      baseUrl +
+      "/changeset/" +
       changesetId +
       '" class="alert-link" target="_blank">' +
       changesetId +
