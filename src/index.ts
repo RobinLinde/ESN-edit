@@ -23,14 +23,14 @@ var type = urlParams.get("type");
 var id = urlParams.get("id");
 var table = document.getElementById("tagTable");
 
-const baseUrl = "https://master.apis.dev.openstreetmap.org";
+const baseUrl = process.env.BASE_URL || "";
 
 // Authentication
 var osmAuth = require("osm-auth");
 
 var auth = osmAuth({
-  oauth_consumer_key: "F7e3Wych4ZlxdlIiJCgZSTI4N0r5jme3FaGV4HLt",
-  oauth_secret: "fyTkz3W3Fuvu5C4xTKw1Z9B9iX1QiwtFJSa0JimZ",
+  oauth_consumer_key: process.env.CONSUMER_KEY || "",
+  oauth_secret: process.env.CONSUMER_SECRET || "",
   url: baseUrl,
 });
 
@@ -193,9 +193,8 @@ function setWikidata(wikidata) {
   }
   if (wikidataNumber) {
     // Update existing one
-    originalXMLasObject["osm"][type][0]["tag"][wikidataNumber]["$"][
-      "v"
-    ] = wikidata;
+    originalXMLasObject["osm"][type][0]["tag"][wikidataNumber]["$"]["v"] =
+      wikidata;
   } else {
     // Create new one
     var key = { $: { k: "name:etymology:wikidata", v: wikidata } };
