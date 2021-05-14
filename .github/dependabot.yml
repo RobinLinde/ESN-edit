@@ -7,3 +7,5 @@ updates:
     commit-message:
       prefix: "⬆️"
     open-pull-requests-limit: 10
+    assignees:
+      - "RobinLinde"
