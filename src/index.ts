@@ -16,6 +16,13 @@ const wikidataDropdown = <HTMLSelectElement>(
   document.getElementById("wikidata-select")
 );
 
+const wikidataSearch = <HTMLInputElement>(
+  document.getElementById("wikidata-search")
+);
+
+const addButton = document.getElementById("addButton");
+const searchButton = document.getElementById("searchButton");
+
 const loginItem = document.getElementById("login-item");
 const loginLink = document.getElementById("login-link");
 
@@ -222,6 +229,7 @@ function showElement(err, res: XMLDocument) {
     }
 
     name = stripName(tagList["name"]);
+    wikidataSearch.value = name;
     if ("name:etymology:wikidata" in tagList) {
       showWikidata(
         name,
@@ -238,8 +246,14 @@ function showElement(err, res: XMLDocument) {
   }
 }
 
+// Redo search on change of language
 languageDropdown.onchange = function () {
-  showWikidata(name, languageDropdown.value, false);
+  showWikidata(wikidataSearch.value, languageDropdown.value, false);
+};
+
+// Execture search
+searchButton.onclick = function () {
+  showWikidata(wikidataSearch.value, languageDropdown.value, false);
 };
 
 // Function to set the wikidata value of object
@@ -265,7 +279,7 @@ function setWikidata(wikidata) {
 }
 
 // Create changeset on button click
-document.getElementById("addButton").onclick = (ev: Event) => {
+addButton.onclick = (ev: Event) => {
   auth.xhr(
     {
       method: "PUT",
