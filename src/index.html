@@ -23,6 +23,12 @@
           </button>
           <div class="navbar-collapse collapse" id="navbarCollapse">
             <ul class="mb-2 mb-md-0 ms-auto navbar-nav">
+              <select id="lang-select" class="form-select">
+                <option value="en">English</option>
+                <option value="de">Deutsch</option>
+                <option value="fr">Français</option>
+                <option value="nl">Nederlands</option>
+              </select>
               <li class="nav-item" id="login-item">
                 <a class="nav-link" id="login-link">Login with OSM</a>
               </li>
@@ -60,10 +66,27 @@
           <th>Value</th>
           <tbody id="tagTable"></tbody>
         </table>
-        <select class="form-select" id="wikidata-select"></select>
-        <button type="button" class="btn btn-primary" id="addButton">
-          Submit edit
-        </button>
+        <div class="input-group mb-3">
+          <input
+            type="text"
+            class="form-control"
+            id="wikidata-search"
+            placeholder="Fill in a search term"
+            aria-label="Search term"
+          />
+          <button type="button" class="btn btn-primary" id="searchButton">
+            Search Wikidata
+          </button>
+        </div>
+        <div class="row align-items-center">
+          <div class="col">
+            <select class="form-select" id="wikidata-select" size="20"></select>
+            <button type="button" class="btn btn-primary" id="addButton">
+              Submit selection
+            </button>
+          </div>
+          <div class="col" id="wikidata-details"></div>
+        </div>
       </div>
     </main>
     <script src="./index.ts"></script>

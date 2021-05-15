@@ -9,6 +9,22 @@ var alertBox = document.getElementById("mainAlert");
 var editorInterface = document.getElementById("editorInterface");
 var searchInterface = document.getElementById("searchInterface");
 
+const wikidataDetails = document.getElementById("wikidata-details");
+
+const languageDropdown = <HTMLSelectElement>(
+  document.getElementById("lang-select")
+);
+const wikidataDropdown = <HTMLSelectElement>(
+  document.getElementById("wikidata-select")
+);
+
+const wikidataSearch = <HTMLInputElement>(
+  document.getElementById("wikidata-search")
+);
+
+const addButton = document.getElementById("addButton");
+const searchButton = document.getElementById("searchButton");
+
 const loginItem = document.getElementById("login-item");
 const loginLink = document.getElementById("login-link");
 
@@ -79,7 +95,7 @@ logoutLink.onclick = (ev: Event) => {
 };
 
 // Name Stripper
-function stripName(name: String) {
+function stripName(name: string) {
   const commonWords = [
     new RegExp("^Avenue de la"),
     new RegExp("^Avenue des"),
@@ -125,6 +141,7 @@ function setOption(selectElement: HTMLSelectElement, value) {
 // Get element
 function getElement(type: string, id) {
   if (itemTypes.includes(type) && id) {
+    languageDropdown.style.display = "block";
     auth.xhr(
       {
         method: "GET",
@@ -135,9 +152,107 @@ function getElement(type: string, id) {
   }
 }
 
+// Function to show Wikidata items
+function showWikidataResults(
+  search: string,
+  lang: string,
+  defaultOption,
+  page: number = 1
+) {
+  const start = page * 20 - 20;
+  const url =
+    "https://www.wikidata.org/w/api.php?action=wbsearchentities&search=" +
+    search +
+    "&language=" +
+    lang +
+    "&limit=20&continue=" +
+    start +
+    "&format=json&uselang=" +
+    lang +
+    "&type=item&origin=*";
+  let request = new XMLHttpRequest();
+  request.open("GET", url);
+  request.responseType = "json";
+  request.send();
+
+  request.onload = function () {
+    const requestData = request.response;
+    const results = requestData.search;
+    wikidataDropdown.innerHTML = "";
+
+    if (results.length == 0) {
+      wikidataDropdown.disabled = true;
+      alertBox.innerText = "Error: no results found";
+      alertBox.className = "alert alert-warning";
+      alertBox.style.display = "block";
+    } else {
+      wikidataDropdown.disabled = false;
+      alertBox.style.display = "none";
+      for (var i = 0; i < results.length; i++) {
+        var option = document.createElement("option");
+        option.innerHTML =
+          results[i].label + " (" + results[i].description + ")";
+        option.value = results[i].id;
+        wikidataDropdown.appendChild(option);
+      }
+      if (defaultOption) {
+        setOption(wikidataDropdown, defaultOption);
+      }
+      showWikidataDetails(wikidataDropdown.value, languageDropdown.value);
+    }
+  };
+}
+
+function showWikidataDetails(entity: string, lang: string) {
+  const url =
+    "https://www.wikidata.org/wiki/Special:EntityData/" + entity + ".json";
+  let request = new XMLHttpRequest();
+  request.open("GET", url);
+  request.responseType = "json";
+  request.send();
+
+  request.onload = function () {
+    const entityData = request.response.entities[entity];
+    wikidataDetails.innerHTML = "";
+
+    const h1 = document.createElement("h1");
+    h1.innerText = entityData["labels"][languageDropdown.value]["value"];
+    wikidataDetails.appendChild(h1);
+
+    const a = document.createElement("a");
+    a.href = "https://www.wikidata.org/wiki/" + entity;
+    a.target = "_blank";
+    a.innerText = "View on Wikidata";
+    wikidataDetails.appendChild(a);
+
+    const p = document.createElement("p");
+    p.innerText = entityData["descriptions"][languageDropdown.value]["value"];
+    wikidataDetails.appendChild(p);
+
+    const url =
+      "https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo&iiprop=url&redirects&format=json&titles=File:" +
+      entityData["claims"]["P18"][0]["mainsnak"]["datavalue"]["value"];
+    let imgRequest = new XMLHttpRequest();
+    imgRequest.open("GET", url);
+    imgRequest.responseType = "json";
+    imgRequest.send();
+
+    imgRequest.onload = function () {
+      const img = document.createElement("img");
+      const pages = imgRequest.response["query"]["pages"];
+      img.src = pages[Object.keys(pages)[0]]["imageinfo"][0]["url"];
+      img.className = "detail-img";
+      wikidataDetails.appendChild(img);
+    };
+
+    console.log(entityData);
+  };
+}
+
 // Show element
 var originalObject; // Make originalObject global
 var originalXMLasObject;
+var name;
 function showElement(err, res: XMLDocument) {
   if (!err) {
     editorInterface.style.display = "block";
@@ -171,40 +286,37 @@ function showElement(err, res: XMLDocument) {
       tr.appendChild(valtd);
     }
 
-    const url =
-      "https://www.wikidata.org/w/api.php?action=wbsearchentities&search=" +
-      stripName(tagList["name"]) +
-      "&language=en&limit=20&continue=0&format=json&uselang=en&type=item&origin=*";
-    let request = new XMLHttpRequest();
-    request.open("GET", url);
-    request.responseType = "json";
-    request.send();
-
-    request.onload = function () {
-      const requestData = request.response;
-      const results = requestData.search;
-      const dropdown = <HTMLSelectElement>(
-        document.getElementById("wikidata-select")
+    name = stripName(tagList["name"]);
+    wikidataSearch.value = name;
+    if ("name:etymology:wikidata" in tagList) {
+      showWikidataResults(
+        name,
+        languageDropdown.value,
+        tagList["name:etymology:wikidata"]
       );
-
-      for (var i = 0; i < results.length; i++) {
-        var option = document.createElement("option");
-        option.text = results[i].label + " (" + results[i].description + ")";
-        option.value = results[i].id;
-        dropdown.appendChild(option);
-      }
-      if ("name:etymology:wikidata" in tagList) {
-        if (!setOption(dropdown, tagList["name:etymology:wikidata"])) {
-          alert("Problem with Wikidata");
-        }
-      }
-    };
+    } else {
+      showWikidataResults(name, languageDropdown.value, false);
+    }
   } else {
     alertBox.innerText = "Error: " + err;
     alertBox.className = "alert alert-danger";
     alertBox.style.display = "block";
   }
 }
+
+// Redo search on change of language
+languageDropdown.onchange = function () {
+  showWikidataResults(wikidataSearch.value, languageDropdown.value, false);
+};
+
+// Execture search
+searchButton.onclick = function () {
+  showWikidataResults(wikidataSearch.value, languageDropdown.value, false);
+};
+
+wikidataDropdown.onchange = function () {
+  showWikidataDetails(wikidataDropdown.value, languageDropdown.value);
+};
 
 // Function to set the wikidata value of object
 function setWikidata(wikidata) {
@@ -229,7 +341,7 @@ function setWikidata(wikidata) {
 }
 
 // Create changeset on button click
-document.getElementById("addButton").onclick = (ev: Event) => {
+addButton.onclick = (ev: Event) => {
   auth.xhr(
     {
       method: "PUT",
@@ -250,8 +362,7 @@ function updateObjects(err, res) {
     console.log("Changeset number: " + changesetId);
 
     // Set WikiData value
-    var dropdown = <HTMLInputElement>document.getElementById("wikidata-select");
-    setWikidata(dropdown.value);
+    setWikidata(wikidataDropdown.value);
 
     // Set changeset id
     originalXMLasObject["osm"][type][0]["$"]["changeset"] = changesetId;
