@@ -9,6 +9,8 @@ var alertBox = document.getElementById("mainAlert");
 var editorInterface = document.getElementById("editorInterface");
 var searchInterface = document.getElementById("searchInterface");
 
+const wikidataDetails = document.getElementById("wikidata-details");
+
 const languageDropdown = <HTMLSelectElement>(
   document.getElementById("lang-select")
 );
@@ -151,7 +153,7 @@ function getElement(type: string, id) {
 }
 
 // Function to show Wikidata items
-function showWikidata(search: string, lang: string, defaultOption) {
+function showWikidataResults(search: string, lang: string, defaultOption) {
   const url =
     "https://www.wikidata.org/w/api.php?action=wbsearchentities&search=" +
     search +
@@ -180,14 +182,61 @@ function showWikidata(search: string, lang: string, defaultOption) {
       alertBox.style.display = "none";
       for (var i = 0; i < results.length; i++) {
         var option = document.createElement("option");
-        option.text = results[i].label + " (" + results[i].description + ")";
+        option.innerHTML =
+          results[i].label + " (" + results[i].description + ")";
         option.value = results[i].id;
         wikidataDropdown.appendChild(option);
       }
       if (defaultOption) {
         setOption(wikidataDropdown, defaultOption);
       }
+      showWikidataDetails(wikidataDropdown.value, languageDropdown.value);
     }
+  };
+}
+
+function showWikidataDetails(entity: string, lang: string) {
+  const url =
+    "https://www.wikidata.org/wiki/Special:EntityData/" + entity + ".json";
+  let request = new XMLHttpRequest();
+  request.open("GET", url);
+  request.responseType = "json";
+  request.send();
+
+  request.onload = function () {
+    const entityData = request.response.entities[entity];
+    wikidataDetails.innerHTML = "";
+
+    const h1 = document.createElement("h1");
+    h1.innerText = entityData["labels"][languageDropdown.value]["value"];
+    wikidataDetails.appendChild(h1);
+
+    const a = document.createElement("a");
+    a.href = "https://www.wikidata.org/wiki/" + entity;
+    a.target = "_blank";
+    a.innerText = "View on Wikidata";
+    wikidataDetails.appendChild(a);
+
+    const p = document.createElement("p");
+    p.innerText = entityData["descriptions"][languageDropdown.value]["value"];
+    wikidataDetails.appendChild(p);
+
+    const url =
+      "https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo&iiprop=url&redirects&format=json&titles=File:" +
+      entityData["claims"]["P18"][0]["mainsnak"]["datavalue"]["value"];
+    let imgRequest = new XMLHttpRequest();
+    imgRequest.open("GET", url);
+    imgRequest.responseType = "json";
+    imgRequest.send();
+
+    imgRequest.onload = function () {
+      const img = document.createElement("img");
+      const pages = imgRequest.response["query"]["pages"];
+      img.src = pages[Object.keys(pages)[0]]["imageinfo"][0]["url"];
+      wikidataDetails.appendChild(img);
+    };
+
+    console.log(entityData);
   };
 }
 
@@ -231,13 +280,13 @@ function showElement(err, res: XMLDocument) {
     name = stripName(tagList["name"]);
     wikidataSearch.value = name;
     if ("name:etymology:wikidata" in tagList) {
-      showWikidata(
+      showWikidataResults(
         name,
         languageDropdown.value,
         tagList["name:etymology:wikidata"]
       );
     } else {
-      showWikidata(name, languageDropdown.value, false);
+      showWikidataResults(name, languageDropdown.value, false);
     }
   } else {
     alertBox.innerText = "Error: " + err;
@@ -248,12 +297,16 @@ function showElement(err, res: XMLDocument) {
 
 // Redo search on change of language
 languageDropdown.onchange = function () {
-  showWikidata(wikidataSearch.value, languageDropdown.value, false);
+  showWikidataResults(wikidataSearch.value, languageDropdown.value, false);
 };
 
 // Execture search
 searchButton.onclick = function () {
-  showWikidata(wikidataSearch.value, languageDropdown.value, false);
+  showWikidataResults(wikidataSearch.value, languageDropdown.value, false);
+};
+
+wikidataDropdown.onchange = function () {
+  showWikidataDetails(wikidataDropdown.value, languageDropdown.value);
 };
 
 // Function to set the wikidata value of object
