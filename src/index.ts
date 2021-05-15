@@ -1,10 +1,17 @@
 import "bootstrap/js/dist/collapse";
+import "bootstrap/js/dist/alert";
 
 var parseString = require("xml2js").parseString;
 var xml2js = require("xml2js");
 
 // Main elements
-var alertBox = document.getElementById("mainAlert");
+var alertBox = document.getElementById("alertBox");
+
+const closeButton = document.createElement("button");
+closeButton.type = "button";
+closeButton.className = "btn-close";
+closeButton.setAttribute("data-bs-dismiss", "alert");
+closeButton.setAttribute("aria-label", "Close");
 
 var editorInterface = document.getElementById("editorInterface");
 var searchInterface = document.getElementById("searchInterface");
@@ -66,8 +73,6 @@ function update() {
     loginItem.style.display = "none";
     logoutItem.style.display = "block";
 
-    alertBox.style.display = "none";
-
     if (type && id) {
       getElement(type, id);
     } else {
@@ -78,9 +83,13 @@ function update() {
     loginItem.style.display = "block";
     logoutItem.style.display = "none";
 
-    alertBox.innerText = "You're not logged in yet, please log in to continue";
-    alertBox.className = "alert alert-primary";
-    alertBox.style.display = "block";
+    var loginAlert = document.createElement("div");
+    loginAlert.innerText =
+      "You're not logged in yet, please log in to continue";
+    loginAlert.className = "alert alert-primary alert-dismissible fade show";
+    loginAlert.setAttribute("role", "alert");
+    loginAlert.appendChild(closeButton);
+    alertBox.appendChild(loginAlert);
 
     editorInterface.style.display = "none";
     searchInterface.style.display = "none";
@@ -182,12 +191,14 @@ function showWikidataResults(
 
     if (results.length == 0) {
       wikidataDropdown.disabled = true;
-      alertBox.innerText = "Error: no results found";
-      alertBox.className = "alert alert-warning";
-      alertBox.style.display = "block";
+      var wikidataAlert = document.createElement("div");
+      wikidataAlert.innerText = "Error: no results found";
+      wikidataAlert.className =
+        "alert alert-warning alert-dismissible fade show";
+      wikidataAlert.appendChild(closeButton);
+      alertBox.appendChild(wikidataAlert);
     } else {
       wikidataDropdown.disabled = false;
-      alertBox.style.display = "none";
       for (var i = 0; i < results.length; i++) {
         var option = document.createElement("option");
         option.innerHTML =
@@ -298,9 +309,11 @@ function showElement(err, res: XMLDocument) {
       showWikidataResults(name, languageDropdown.value, false);
     }
   } else {
-    alertBox.innerText = "Error: " + err;
-    alertBox.className = "alert alert-danger";
-    alertBox.style.display = "block";
+    var alert = document.createElement("div");
+    alert.innerText = "Error: " + err;
+    alert.className = "alert alert-danger alert-dismissible fade show";
+    alert.appendChild(closeButton);
+    alertBox.appendChild(alert);
   }
 }
 
@@ -382,9 +395,11 @@ function updateObjects(err, res) {
       closeChangeset
     );
   } else {
-    alertBox.innerText = "Error: " + err;
-    alertBox.className = "alert alert-danger";
-    alertBox.style.display = "block";
+    var alert = document.createElement("div");
+    alert.innerText = "Error: " + err;
+    alert.className = "alert alert-danger alert-dismissible fade show";
+    alert.appendChild(closeButton);
+    alertBox.appendChild(alert);
   }
 }
 
@@ -399,16 +414,19 @@ function closeChangeset(err, res) {
       giveFeedback
     );
   } else {
-    alertBox.innerText = "Error: " + err;
-    alertBox.className = "alert alert-danger";
-    alertBox.style.display = "block";
+    var alert = document.createElement("div");
+    alert.innerText = "Error: " + err;
+    alert.className = "alert alert-danger alert-dismissible fade show";
+    alert.appendChild(closeButton);
+    alertBox.appendChild(alert);
   }
 }
 
 // Give some feedback to the user
 function giveFeedback(err, res) {
   if (!err) {
-    alertBox.innerHTML =
+    var alert = document.createElement("div");
+    alert.innerHTML =
       'Success, your changes are uploaded in changeset <a href="' +
       baseUrl +
       "/changeset/" +
@@ -416,13 +434,16 @@ function giveFeedback(err, res) {
       '" class="alert-link" target="_blank">' +
       changesetId +
       "</a>.";
-    alertBox.className = "alert alert-success";
-    alertBox.style.display = "block";
+    alert.className = "alert alert-success alert-dismissible fade show";
+    alert.appendChild(closeButton);
+    alertBox.appendChild(alert);
 
     getElement(type, id);
   } else {
-    alertBox.innerText = "Error: " + err;
-    alertBox.className = "alert alert-danger";
-    alertBox.style.display = "block";
+    var alert = document.createElement("div");
+    alert.innerText = "Error: " + err;
+    alert.className = "alert alert-danger alert-dismissible fade show";
+    alert.appendChild(closeButton);
+    alertBox.appendChild(alert);
   }
 }
