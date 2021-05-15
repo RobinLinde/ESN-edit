@@ -255,8 +255,6 @@ function showWikidataDetails(entity: string, lang: string) {
       img.className = "detail-img";
       wikidataDetails.appendChild(img);
     };
-
-    console.log(entityData);
   };
 }
 
