@@ -208,8 +208,8 @@ function showWikidataResults(
       }
       if (defaultOption) {
         setOption(wikidataDropdown, defaultOption);
+        showWikidataDetails(wikidataDropdown.value, languageDropdown.value);
       }
-      showWikidataDetails(wikidataDropdown.value, languageDropdown.value);
     }
   };
 }
@@ -278,6 +278,8 @@ function showElement(err, res: XMLDocument) {
     );
 
     var tagList = {};
+    var nameTags = [];
+
     table.innerHTML = "";
     for (var i = 0; i < tags.length; i++) {
       var tag = tags[i].attributes;
@@ -293,9 +295,18 @@ function showElement(err, res: XMLDocument) {
       var valtd = document.createElement("td");
       valtd.innerText = tag.getNamedItem("v").value;
       tr.appendChild(valtd);
+
+      if (tag.getNamedItem("k").value.match("^name:.{2}$")) {
+        nameTags.push(tag.getNamedItem("k").value);
+      }
     }
 
-    name = stripName(tagList["name"]);
+    if (nameTags.length > 0) {
+      setOption(languageDropdown, nameTags[0].substring(5));
+      name = stripName(tagList[nameTags[0]]);
+    } else {
+      name = stripName(tagList["name"]);
+    }
     wikidataSearch.value = name;
     if ("name:etymology:wikidata" in tagList) {
       showWikidataResults(
@@ -308,7 +319,7 @@ function showElement(err, res: XMLDocument) {
     }
   } else {
     var alert = document.createElement("div");
-    alert.innerText = "Error: " + err;
+    alert.innerText = "Error: " + err.status + " - " + err.statusText;
     alert.className = "alert alert-danger alert-dismissible fade show";
     alert.appendChild(closeButton);
     alertBox.appendChild(alert);
@@ -394,7 +405,7 @@ function updateObjects(err, res) {
     );
   } else {
     var alert = document.createElement("div");
-    alert.innerText = "Error: " + err;
+    alert.innerText = "Error: " + err.status + " - " + err.statusText;
     alert.className = "alert alert-danger alert-dismissible fade show";
     alert.appendChild(closeButton);
     alertBox.appendChild(alert);
@@ -413,7 +424,7 @@ function closeChangeset(err, res) {
     );
   } else {
     var alert = document.createElement("div");
-    alert.innerText = "Error: " + err;
+    alert.innerText = "Error: " + err.status + " - " + err.statusText;
     alert.className = "alert alert-danger alert-dismissible fade show";
     alert.appendChild(closeButton);
     alertBox.appendChild(alert);
@@ -439,7 +450,7 @@ function giveFeedback(err, res) {
     getElement(type, id);
   } else {
     var alert = document.createElement("div");
-    alert.innerText = "Error: " + err;
+    alert.innerText = "Error: " + err.status + " - " + err.statusText;
     alert.className = "alert alert-danger alert-dismissible fade show";
     alert.appendChild(closeButton);
     alertBox.appendChild(alert);
