@@ -153,13 +153,21 @@ function getElement(type: string, id) {
 }
 
 // Function to show Wikidata items
-function showWikidataResults(search: string, lang: string, defaultOption) {
+function showWikidataResults(
+  search: string,
+  lang: string,
+  defaultOption,
+  page: number = 1
+) {
+  const start = page * 20 - 20;
   const url =
     "https://www.wikidata.org/w/api.php?action=wbsearchentities&search=" +
     search +
     "&language=" +
     lang +
-    "&limit=20&continue=0&format=json&uselang=" +
+    "&limit=20&continue=" +
+    start +
+    "&format=json&uselang=" +
     lang +
     "&type=item&origin=*";
   let request = new XMLHttpRequest();
@@ -233,6 +241,7 @@ function showWikidataDetails(entity: string, lang: string) {
       const img = document.createElement("img");
       const pages = imgRequest.response["query"]["pages"];
       img.src = pages[Object.keys(pages)[0]]["imageinfo"][0]["url"];
+      img.className = "detail-img";
       wikidataDetails.appendChild(img);
     };
 
