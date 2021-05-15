@@ -66,19 +66,24 @@
           <th>Value</th>
           <tbody id="tagTable"></tbody>
         </table>
-        <input
-          type="text"
-          class="form-control"
-          id="wikidata-search"
-          placeholder="Fill in a search term"
-        />
-        <button type="button" class="btn btn-primary" id="searchButton">
-          Search Wikidata
-        </button>
-        <select class="form-select" id="wikidata-select"></select>
-        <button type="button" class="btn btn-primary" id="addButton">
-          Submit edit
-        </button>
+        <div class="input-group mb-3">
+          <input
+            type="text"
+            class="form-control"
+            id="wikidata-search"
+            placeholder="Fill in a search term"
+            aria-label="Search term"
+          />
+          <button type="button" class="btn btn-primary" id="searchButton">
+            Search Wikidata
+          </button>
+        </div>
+        <div class="input-group mb-3">
+          <select class="form-select" id="wikidata-select"></select>
+          <button type="button" class="btn btn-primary" id="addButton">
+            Submit edit
+          </button>
+        </div>
       </div>
     </main>
     <script src="./index.ts"></script>
