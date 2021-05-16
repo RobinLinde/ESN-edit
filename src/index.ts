@@ -241,8 +241,11 @@ function showWikidataDetails(entity: string, lang: string) {
     wikidataDetails.appendChild(p);
 
     const url =
-      "https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo&iiprop=url&redirects&format=json&titles=File:" +
-      entityData["claims"]["P18"][0]["mainsnak"]["datavalue"]["value"];
+      "https://api.allorigins.win/raw?url=" +
+      encodeURIComponent(
+        "https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo&iiprop=url&redirects&format=json&titles=File:" +
+          entityData["claims"]["P18"][0]["mainsnak"]["datavalue"]["value"]
+      );
     let imgRequest = new XMLHttpRequest();
     imgRequest.open("GET", url);
     imgRequest.responseType = "json";
