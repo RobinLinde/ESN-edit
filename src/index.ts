@@ -114,6 +114,8 @@ function stripName(name: string) {
     new RegExp("^Boulevard"),
     new RegExp("laan$"),
     new RegExp("lei$"),
+    new RegExp("-platz$"),
+    new RegExp("platz$"),
     new RegExp("plein$"),
     new RegExp("^Rue de la"),
     new RegExp("^Rue des"),
