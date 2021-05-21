@@ -123,6 +123,7 @@ function stripName(name: string) {
     new RegExp("^Rue du"),
     new RegExp("^Rue d'"),
     new RegExp("^Rue"),
+    new RegExp("singel$"),
     new RegExp("straat$"),
     new RegExp("-strasse$", "i"),
     new RegExp("strasse$", "i"),
