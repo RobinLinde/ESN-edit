@@ -3,6 +3,7 @@ import "bootstrap/js/dist/alert";
 
 var parseString = require("xml2js").parseString;
 var xml2js = require("xml2js");
+var tag2link = require("tag2link");
 
 // Main elements
 var alertBox = document.getElementById("alertBox");
@@ -286,9 +287,14 @@ function showElement(err, res: XMLDocument) {
     var tagList = {};
     var nameTags = [];
 
+    console.log(tag2link);
+
     table.innerHTML = "";
     for (var i = 0; i < tags.length; i++) {
       var tag = tags[i].attributes;
+      var taglink = tag2link.find(
+        (element) => element.key == "Key:" + tag.getNamedItem("k").value
+      );
       tagList[tag.getNamedItem("k").value] = tag.getNamedItem("v").value;
 
       var tr = document.createElement("tr");
@@ -299,7 +305,15 @@ function showElement(err, res: XMLDocument) {
       tr.appendChild(keytd);
 
       var valtd = document.createElement("td");
-      valtd.innerText = tag.getNamedItem("v").value;
+      if (taglink) {
+        var vala = document.createElement("a");
+        vala.href = taglink.url.replace("$1", tag.getNamedItem("v").value);
+        vala.innerText = tag.getNamedItem("v").value;
+        vala.target = "_blank";
+        valtd.appendChild(vala);
+      } else {
+        valtd.innerText = tag.getNamedItem("v").value;
+      }
       tr.appendChild(valtd);
 
       if (tag.getNamedItem("k").value.match("^name:.{2}$")) {
