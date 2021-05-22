@@ -45,6 +45,7 @@ const urlParams = new URLSearchParams(queryString);
 const itemTypes = ["relation", "way"];
 var type = urlParams.get("type");
 var id = urlParams.get("id");
+var closeOnSucess = urlParams.get("close");
 var table = document.getElementById("tagTable");
 
 const baseUrl = process.env.BASE_URL || "";
@@ -466,6 +467,12 @@ function giveFeedback(err, res) {
     alert.className = "alert alert-success alert-dismissible fade show";
     alert.appendChild(closeButton);
     alertBox.appendChild(alert);
+
+    if (closeOnSucess) {
+      setTimeout(() => {
+        window.close();
+      }, 1000);
+    }
 
     getElement(type, id);
   } else {
