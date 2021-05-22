@@ -1,6 +1,6 @@
 {
   "name": "esn-edit",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "OpenStreetMap editor, for name etymology. Designed as an editor for the EqualStreetNames project.",
   "keywords": [
     "osm",
