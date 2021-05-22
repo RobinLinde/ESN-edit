@@ -288,8 +288,6 @@ function showElement(err, res: XMLDocument) {
     var tagList = {};
     var nameTags = [];
 
-    console.log(tag2link);
-
     table.innerHTML = "";
     for (var i = 0; i < tags.length; i++) {
       var tag = tags[i].attributes;
