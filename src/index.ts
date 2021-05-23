@@ -1,12 +1,13 @@
 import "bootstrap/js/dist/collapse";
 import "bootstrap/js/dist/alert";
 
-var parseString = require("xml2js").parseString;
-var xml2js = require("xml2js");
-var tag2link = require("tag2link");
+import { parseString } from "xml2js";
+import xml2js from "xml2js";
+import tag2link from "tag2link";
+import osmAuth from "osm-auth";
 
 // Main elements
-var alertBox = document.getElementById("alertBox");
+const alertBox = document.getElementById("alertBox");
 
 const closeButton = document.createElement("button");
 closeButton.type = "button";
@@ -14,8 +15,8 @@ closeButton.className = "btn-close";
 closeButton.setAttribute("data-bs-dismiss", "alert");
 closeButton.setAttribute("aria-label", "Close");
 
-var editorInterface = document.getElementById("editorInterface");
-var searchInterface = document.getElementById("searchInterface");
+const editorInterface = document.getElementById("editorInterface");
+const searchInterface = document.getElementById("searchInterface");
 
 const wikidataDetails = document.getElementById("wikidata-details");
 
@@ -43,24 +44,23 @@ const logoutLink = document.getElementById("logout-link");
 const queryString = window.location.search;
 const urlParams = new URLSearchParams(queryString);
 const itemTypes = ["relation", "way"];
-var type = urlParams.get("type");
-var id = urlParams.get("id");
-var closeOnSucess = urlParams.get("close");
-var table = document.getElementById("tagTable");
+const type = urlParams.get("type");
+const id = urlParams.get("id");
+const closeOnSucess = urlParams.get("close");
+const table = document.getElementById("tagTable");
 
 const baseUrl = process.env.BASE_URL || "";
 
 // Authentication
-var osmAuth = require("osm-auth");
-
-var auth = osmAuth({
+// @ts-expect-error: Typescript expects the new keyword here but thats breaks the code
+const auth = osmAuth({
   oauth_consumer_key: process.env.CONSUMER_KEY || "",
   oauth_secret: process.env.CONSUMER_SECRET || "",
   url: baseUrl,
 });
 
 // Login link
-loginLink.onclick = (ev: Event) => {
+loginLink.onclick = () => {
   if (!auth.bringPopupWindowToFront()) {
     auth.authenticate(function () {
       update();
@@ -69,7 +69,7 @@ loginLink.onclick = (ev: Event) => {
 };
 
 // Update page based on auth state
-var loginAlert;
+let loginAlert: HTMLDivElement;
 function update() {
   if (auth.authenticated()) {
     // User logged in
@@ -103,7 +103,7 @@ function update() {
 update();
 
 // Logout link
-logoutLink.onclick = (ev: Event) => {
+logoutLink.onclick = () => {
   auth.logout();
   update();
 };
@@ -136,17 +136,17 @@ function stripName(name: string) {
     new RegExp("straße$", "i"),
     new RegExp("weg$"),
   ];
-  var output = name;
-  for (var i = 0; i < commonWords.length; i++) {
+  let output = name;
+  for (let i = 0; i < commonWords.length; i++) {
     output = output.replace(commonWords[i], "");
   }
   return output;
 }
 
 // Option selector
-function setOption(selectElement: HTMLSelectElement, value) {
-  var options = selectElement.options;
-  for (var i = 0, optionsLength = options.length; i < optionsLength; i++) {
+function setOption(selectElement: HTMLSelectElement, value: string) {
+  const options = selectElement.options;
+  for (let i = 0, optionsLength = options.length; i < optionsLength; i++) {
     if (options[i].value == value) {
       selectElement.selectedIndex = i;
       return true;
@@ -174,7 +174,7 @@ function showWikidataResults(
   search: string,
   lang: string,
   defaultOption,
-  page: number = 1
+  page = 1
 ) {
   const start = page * 20 - 20;
   const url =
@@ -187,7 +187,7 @@ function showWikidataResults(
     "&format=json&uselang=" +
     lang +
     "&type=item&origin=*";
-  let request = new XMLHttpRequest();
+  const request = new XMLHttpRequest();
   request.open("GET", url);
   request.responseType = "json";
   request.send();
@@ -199,7 +199,7 @@ function showWikidataResults(
 
     if (results.length == 0) {
       wikidataDropdown.disabled = true;
-      var wikidataAlert = document.createElement("div");
+      const wikidataAlert = document.createElement("div");
       wikidataAlert.innerText = "Error: no results found";
       wikidataAlert.className =
         "alert alert-warning alert-dismissible fade show";
@@ -207,8 +207,8 @@ function showWikidataResults(
       alertBox.appendChild(wikidataAlert);
     } else {
       wikidataDropdown.disabled = false;
-      for (var i = 0; i < results.length; i++) {
-        var option = document.createElement("option");
+      for (let i = 0; i < results.length; i++) {
+        const option = document.createElement("option");
         option.innerHTML =
           results[i].label + " (" + results[i].description + ")";
         option.value = results[i].id;
@@ -225,7 +225,7 @@ function showWikidataResults(
 function showWikidataDetails(entity: string, lang: string) {
   const url =
     "https://www.wikidata.org/wiki/Special:EntityData/" + entity + ".json";
-  let request = new XMLHttpRequest();
+  const request = new XMLHttpRequest();
   request.open("GET", url);
   request.responseType = "json";
   request.send();
@@ -235,7 +235,7 @@ function showWikidataDetails(entity: string, lang: string) {
     wikidataDetails.innerHTML = "";
 
     const h1 = document.createElement("h1");
-    h1.innerText = entityData["labels"][languageDropdown.value]["value"];
+    h1.innerText = entityData["labels"][lang]["value"];
     wikidataDetails.appendChild(h1);
 
     const a = document.createElement("a");
@@ -245,7 +245,7 @@ function showWikidataDetails(entity: string, lang: string) {
     wikidataDetails.appendChild(a);
 
     const p = document.createElement("p");
-    p.innerText = entityData["descriptions"][languageDropdown.value]["value"];
+    p.innerText = entityData["descriptions"][lang]["value"];
     wikidataDetails.appendChild(p);
 
     const url =
@@ -254,7 +254,7 @@ function showWikidataDetails(entity: string, lang: string) {
         "https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo&iiprop=url&redirects&format=json&titles=File:" +
           entityData["claims"]["P18"][0]["mainsnak"]["datavalue"]["value"]
       );
-    let imgRequest = new XMLHttpRequest();
+    const imgRequest = new XMLHttpRequest();
     imgRequest.open("GET", url);
     imgRequest.responseType = "json";
     imgRequest.send();
@@ -270,9 +270,9 @@ function showWikidataDetails(entity: string, lang: string) {
 }
 
 // Show element
-var originalObject; // Make originalObject global
-var originalXMLasObject;
-var name;
+let originalObject; // Make originalObject global
+let originalXMLasObject;
+let name;
 function showElement(err, res: XMLDocument) {
   if (!err) {
     editorInterface.style.display = "block";
@@ -288,27 +288,27 @@ function showElement(err, res: XMLDocument) {
       }
     );
 
-    var tagList = {};
-    var nameTags = [];
+    const tagList = {};
+    const nameTags = [];
 
     table.innerHTML = "";
-    for (var i = 0; i < tags.length; i++) {
-      var tag = tags[i].attributes;
-      var taglink = tag2link.find(
+    for (let i = 0; i < tags.length; i++) {
+      const tag = tags[i].attributes;
+      const taglink = tag2link.find(
         (element) => element.key == "Key:" + tag.getNamedItem("k").value
       );
       tagList[tag.getNamedItem("k").value] = tag.getNamedItem("v").value;
 
-      var tr = document.createElement("tr");
+      const tr = document.createElement("tr");
       table.appendChild(tr);
 
-      var keytd = document.createElement("td");
+      const keytd = document.createElement("td");
       keytd.innerText = tag.getNamedItem("k").value;
       tr.appendChild(keytd);
 
-      var valtd = document.createElement("td");
+      const valtd = document.createElement("td");
       if (taglink) {
-        var vala = document.createElement("a");
+        const vala = document.createElement("a");
         vala.href = taglink.url.replace("$1", tag.getNamedItem("v").value);
         vala.innerText = tag.getNamedItem("v").value;
         vala.target = "_blank";
@@ -340,7 +340,7 @@ function showElement(err, res: XMLDocument) {
       showWikidataResults(name, languageDropdown.value, false);
     }
   } else {
-    var alert = document.createElement("div");
+    const alert = document.createElement("div");
     alert.innerText = "Error: " + err.status + " - " + err.statusText;
     alert.className = "alert alert-danger alert-dismissible fade show";
     alert.appendChild(closeButton);
@@ -364,13 +364,15 @@ wikidataDropdown.onchange = function () {
 
 // Function to set the wikidata value of object
 function setWikidata(wikidata) {
-  for (var i = 0; i < originalXMLasObject["osm"][type][0]["tag"].length; i++) {
+  let wikidataNumber;
+
+  for (let i = 0; i < originalXMLasObject["osm"][type][0]["tag"].length; i++) {
     if (
       originalXMLasObject["osm"][type][0]["tag"][i]["$"]["k"] ==
       "name:etymology:wikidata"
     ) {
       // Wikidata entry already exists
-      var wikidataNumber = i;
+      wikidataNumber = i;
     }
   }
   if (wikidataNumber) {
@@ -379,13 +381,13 @@ function setWikidata(wikidata) {
       wikidata;
   } else {
     // Create new one
-    var key = { $: { k: "name:etymology:wikidata", v: wikidata } };
+    const key = { $: { k: "name:etymology:wikidata", v: wikidata } };
     originalXMLasObject["osm"][type][0]["tag"].push(key);
   }
 }
 
 // Create changeset on button click
-addButton.onclick = (ev: Event) => {
+addButton.onclick = () => {
   auth.xhr(
     {
       method: "PUT",
@@ -398,7 +400,7 @@ addButton.onclick = (ev: Event) => {
   );
 };
 
-var changesetId;
+let changesetId;
 function updateObjects(err, res) {
   if (!err) {
     // Get Changeset ID
@@ -412,8 +414,8 @@ function updateObjects(err, res) {
     originalXMLasObject["osm"][type][0]["$"]["changeset"] = changesetId;
 
     // Prepare XML
-    var builder = new xml2js.Builder();
-    var changesetXML = builder.buildObject(originalXMLasObject);
+    const builder = new xml2js.Builder();
+    const changesetXML = builder.buildObject(originalXMLasObject);
 
     // Update object
     auth.xhr(
@@ -426,7 +428,7 @@ function updateObjects(err, res) {
       closeChangeset
     );
   } else {
-    var alert = document.createElement("div");
+    const alert = document.createElement("div");
     alert.innerText = "Error: " + err.status + " - " + err.statusText;
     alert.className = "alert alert-danger alert-dismissible fade show";
     alert.appendChild(closeButton);
@@ -435,7 +437,7 @@ function updateObjects(err, res) {
 }
 
 // Function to close the changeset
-function closeChangeset(err, res) {
+function closeChangeset(err) {
   if (!err) {
     auth.xhr(
       {
@@ -445,7 +447,7 @@ function closeChangeset(err, res) {
       giveFeedback
     );
   } else {
-    var alert = document.createElement("div");
+    const alert = document.createElement("div");
     alert.innerText = "Error: " + err.status + " - " + err.statusText;
     alert.className = "alert alert-danger alert-dismissible fade show";
     alert.appendChild(closeButton);
@@ -454,9 +456,9 @@ function closeChangeset(err, res) {
 }
 
 // Give some feedback to the user
-function giveFeedback(err, res) {
+function giveFeedback(err) {
   if (!err) {
-    var alert = document.createElement("div");
+    const alert = document.createElement("div");
     alert.innerHTML =
       'Success, your changes are uploaded in changeset <a href="' +
       baseUrl +
@@ -477,7 +479,7 @@ function giveFeedback(err, res) {
 
     getElement(type, id);
   } else {
-    var alert = document.createElement("div");
+    const alert = document.createElement("div");
     alert.innerText = "Error: " + err.status + " - " + err.statusText;
     alert.className = "alert alert-danger alert-dismissible fade show";
     alert.appendChild(closeButton);

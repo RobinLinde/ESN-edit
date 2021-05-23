@@ -1,28 +1,28 @@
 # ESN-Edit
 
 ESN-Edit is a simple OSM editor, focused on etymology.
-It allows you to choose a way or relation, and gives a suggestion for a Wikidata entry.
+It allows you to choose a way or relation, and it gives you a suggestion for a Wikidata entry.
 
 ## Running the app
 
-To run it you need to install dependencies and create a .env file.
+There are a few steps required to run this app
 
-Your .env file should look something like this:
+1. Create a .env file
 
-```env
-BASE_URL= base url for OSM, for example https://master.apis.dev.openstreetmap.org
-CONSUMER_KEY=Your oauth consumer key
-CONSUMER_SECRET=Yout oauth consumer secret
-```
+   Your .env file should look something like this:
 
-Afterwards run the following to start a dev server:
+   ```env
+   BASE_URL= base url for OSM, for example https://master.apis.dev.openstreetmap.org
+   CONSUMER_KEY=Your oauth consumer key
+   CONSUMER_SECRET=Your oauth consumer secret
+   ```
 
-```cmd
-npm install
-npm run start
-```
+   You can go to [https://www.openstreetmap.org/user/username/oauth_clients/new](https://www.openstreetmap.org/user/username/oauth_clients/new) to register a new application and get your own `CONSUMER_KEY` and `CONSUMER_SECRET`
 
-Alternatively you can build by replacing `start` with `build`.
+2. Install all the dependencies `npm install`
+3. Start the development server `npm start`
+
+   Alternatively you can build by replacing `start` with `build` to create a production build.
 
 ## Process
 
