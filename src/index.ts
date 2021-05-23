@@ -1,10 +1,10 @@
 import "bootstrap/js/dist/collapse";
 import "bootstrap/js/dist/alert";
 
-import { parseString } from 'xml2js';
-import xml2js from 'xml2js';
-import tag2link from 'tag2link';
-import osmAuth from 'osm-auth';
+import { parseString } from "xml2js";
+import xml2js from "xml2js";
+import tag2link from "tag2link";
+import osmAuth from "osm-auth";
 
 // Main elements
 const alertBox = document.getElementById("alertBox");
@@ -70,7 +70,7 @@ loginLink.onclick = (ev: Event) => {
 
 // Update page based on auth state
 let loginAlert: HTMLDivElement;
-function update () {
+function update() {
   if (auth.authenticated()) {
     // User logged in
     loginItem.style.display = "none";
@@ -109,7 +109,7 @@ logoutLink.onclick = (ev: Event) => {
 };
 
 // Name Stripper
-function stripName (name: string) {
+function stripName(name: string) {
   const commonWords = [
     new RegExp("^Avenue de la"),
     new RegExp("^Avenue des"),
@@ -144,7 +144,7 @@ function stripName (name: string) {
 }
 
 // Option selector
-function setOption (selectElement: HTMLSelectElement, value: string) {
+function setOption(selectElement: HTMLSelectElement, value: string) {
   const options = selectElement.options;
   for (let i = 0, optionsLength = options.length; i < optionsLength; i++) {
     if (options[i].value == value) {
@@ -156,7 +156,7 @@ function setOption (selectElement: HTMLSelectElement, value: string) {
 }
 
 // Get element
-function getElement (type: string, id) {
+function getElement(type: string, id) {
   if (itemTypes.includes(type) && id) {
     languageDropdown.style.display = "block";
     auth.xhr(
@@ -170,7 +170,7 @@ function getElement (type: string, id) {
 }
 
 // Function to show Wikidata items
-function showWikidataResults (
+function showWikidataResults(
   search: string,
   lang: string,
   defaultOption,
@@ -222,7 +222,7 @@ function showWikidataResults (
   };
 }
 
-function showWikidataDetails (entity: string, lang: string) {
+function showWikidataDetails(entity: string, lang: string) {
   const url =
     "https://www.wikidata.org/wiki/Special:EntityData/" + entity + ".json";
   let request = new XMLHttpRequest();
@@ -252,7 +252,7 @@ function showWikidataDetails (entity: string, lang: string) {
       "https://api.allorigins.win/raw?url=" +
       encodeURIComponent(
         "https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo&iiprop=url&redirects&format=json&titles=File:" +
-        entityData["claims"]["P18"][0]["mainsnak"]["datavalue"]["value"]
+          entityData["claims"]["P18"][0]["mainsnak"]["datavalue"]["value"]
       );
     let imgRequest = new XMLHttpRequest();
     imgRequest.open("GET", url);
@@ -273,7 +273,7 @@ function showWikidataDetails (entity: string, lang: string) {
 let originalObject; // Make originalObject global
 let originalXMLasObject;
 let name;
-function showElement (err, res: XMLDocument) {
+function showElement(err, res: XMLDocument) {
   if (!err) {
     editorInterface.style.display = "block";
     const tags = res.getElementsByTagName("tag");
@@ -363,7 +363,7 @@ wikidataDropdown.onchange = function () {
 };
 
 // Function to set the wikidata value of object
-function setWikidata (wikidata) {
+function setWikidata(wikidata) {
   let wikidataNumber;
 
   for (let i = 0; i < originalXMLasObject["osm"][type][0]["tag"].length; i++) {
@@ -401,7 +401,7 @@ addButton.onclick = (ev: Event) => {
 };
 
 let changesetId;
-function updateObjects (err, res) {
+function updateObjects(err, res) {
   if (!err) {
     // Get Changeset ID
     changesetId = res;
@@ -437,7 +437,7 @@ function updateObjects (err, res) {
 }
 
 // Function to close the changeset
-function closeChangeset (err, res) {
+function closeChangeset(err, res) {
   if (!err) {
     auth.xhr(
       {
@@ -456,7 +456,7 @@ function closeChangeset (err, res) {
 }
 
 // Give some feedback to the user
-function giveFeedback (err, res) {
+function giveFeedback(err, res) {
   if (!err) {
     const alert = document.createElement("div");
     alert.innerHTML =
