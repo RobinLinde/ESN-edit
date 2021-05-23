@@ -378,10 +378,10 @@ function setWikidata(wikidata) {
   if (wikidataNumber) {
     // Update existing one
     originalXMLasObject["osm"][type][0]["tag"][wikidataNumber]["$"]["v"] =
-      wikidata;
+      wikidata.join("; ");
   } else {
     // Create new one
-    const key = { $: { k: "name:etymology:wikidata", v: wikidata } };
+    const key = { $: { k: "name:etymology:wikidata", v: wikidata.join("; ")} };
     originalXMLasObject["osm"][type][0]["tag"].push(key);
   }
 }
@@ -408,7 +408,11 @@ function updateObjects(err, res) {
     console.log("Changeset number: " + changesetId);
 
     // Set WikiData value
-    setWikidata(wikidataDropdown.value);
+    let wikiDataList = [];
+    for (let i=0; i<wikidataDropdown.selectedOptions.length; i++){
+      wikiDataList.push(wikidataDropdown.selectedOptions[i].value)
+    }
+    setWikidata(wikiDataList);
 
     // Set changeset id
     originalXMLasObject["osm"][type][0]["$"]["changeset"] = changesetId;
