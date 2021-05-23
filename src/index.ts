@@ -69,11 +69,16 @@ loginLink.onclick = (ev: Event) => {
 };
 
 // Update page based on auth state
+var loginAlert;
 function update() {
   if (auth.authenticated()) {
     // User logged in
     loginItem.style.display = "none";
     logoutItem.style.display = "block";
+
+    if (loginAlert) {
+      loginAlert.remove();
+    }
 
     if (type && id) {
       getElement(type, id);
@@ -85,12 +90,10 @@ function update() {
     loginItem.style.display = "block";
     logoutItem.style.display = "none";
 
-    var loginAlert = document.createElement("div");
+    loginAlert = document.createElement("div");
     loginAlert.innerText =
       "You're not logged in yet, please log in to continue";
-    loginAlert.className = "alert alert-primary alert-dismissible fade show";
-    loginAlert.setAttribute("role", "alert");
-    loginAlert.appendChild(closeButton);
+    loginAlert.className = "alert alert-primary";
     alertBox.appendChild(loginAlert);
 
     editorInterface.style.display = "none";
