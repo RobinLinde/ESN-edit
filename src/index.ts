@@ -52,7 +52,7 @@ const table = document.getElementById("tagTable");
 const baseUrl = process.env.BASE_URL || "";
 
 // Authentication
-// @ts-ignore
+// @ts-expect-error: Typescript expects the new keyword here but thats breaks the code
 const auth = osmAuth({
   oauth_consumer_key: process.env.CONSUMER_KEY || "",
   oauth_secret: process.env.CONSUMER_SECRET || "",
@@ -60,7 +60,7 @@ const auth = osmAuth({
 });
 
 // Login link
-loginLink.onclick = (ev: Event) => {
+loginLink.onclick = () => {
   if (!auth.bringPopupWindowToFront()) {
     auth.authenticate(function () {
       update();
@@ -103,7 +103,7 @@ function update() {
 update();
 
 // Logout link
-logoutLink.onclick = (ev: Event) => {
+logoutLink.onclick = () => {
   auth.logout();
   update();
 };
@@ -174,7 +174,7 @@ function showWikidataResults(
   search: string,
   lang: string,
   defaultOption,
-  page: number = 1
+  page = 1
 ) {
   const start = page * 20 - 20;
   const url =
@@ -187,7 +187,7 @@ function showWikidataResults(
     "&format=json&uselang=" +
     lang +
     "&type=item&origin=*";
-  let request = new XMLHttpRequest();
+  const request = new XMLHttpRequest();
   request.open("GET", url);
   request.responseType = "json";
   request.send();
@@ -208,7 +208,7 @@ function showWikidataResults(
     } else {
       wikidataDropdown.disabled = false;
       for (let i = 0; i < results.length; i++) {
-        let option = document.createElement("option");
+        const option = document.createElement("option");
         option.innerHTML =
           results[i].label + " (" + results[i].description + ")";
         option.value = results[i].id;
@@ -225,7 +225,7 @@ function showWikidataResults(
 function showWikidataDetails(entity: string, lang: string) {
   const url =
     "https://www.wikidata.org/wiki/Special:EntityData/" + entity + ".json";
-  let request = new XMLHttpRequest();
+  const request = new XMLHttpRequest();
   request.open("GET", url);
   request.responseType = "json";
   request.send();
@@ -235,7 +235,7 @@ function showWikidataDetails(entity: string, lang: string) {
     wikidataDetails.innerHTML = "";
 
     const h1 = document.createElement("h1");
-    h1.innerText = entityData["labels"][languageDropdown.value]["value"];
+    h1.innerText = entityData["labels"][lang]["value"];
     wikidataDetails.appendChild(h1);
 
     const a = document.createElement("a");
@@ -245,7 +245,7 @@ function showWikidataDetails(entity: string, lang: string) {
     wikidataDetails.appendChild(a);
 
     const p = document.createElement("p");
-    p.innerText = entityData["descriptions"][languageDropdown.value]["value"];
+    p.innerText = entityData["descriptions"][lang]["value"];
     wikidataDetails.appendChild(p);
 
     const url =
@@ -254,7 +254,7 @@ function showWikidataDetails(entity: string, lang: string) {
         "https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo&iiprop=url&redirects&format=json&titles=File:" +
           entityData["claims"]["P18"][0]["mainsnak"]["datavalue"]["value"]
       );
-    let imgRequest = new XMLHttpRequest();
+    const imgRequest = new XMLHttpRequest();
     imgRequest.open("GET", url);
     imgRequest.responseType = "json";
     imgRequest.send();
@@ -387,7 +387,7 @@ function setWikidata(wikidata) {
 }
 
 // Create changeset on button click
-addButton.onclick = (ev: Event) => {
+addButton.onclick = () => {
   auth.xhr(
     {
       method: "PUT",
@@ -437,7 +437,7 @@ function updateObjects(err, res) {
 }
 
 // Function to close the changeset
-function closeChangeset(err, res) {
+function closeChangeset(err) {
   if (!err) {
     auth.xhr(
       {
@@ -456,7 +456,7 @@ function closeChangeset(err, res) {
 }
 
 // Give some feedback to the user
-function giveFeedback(err, res) {
+function giveFeedback(err) {
   if (!err) {
     const alert = document.createElement("div");
     alert.innerHTML =
