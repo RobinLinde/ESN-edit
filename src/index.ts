@@ -294,27 +294,35 @@ function showElement(err, res: XMLDocument) {
     table.innerHTML = "";
     for (let i = 0; i < tags.length; i++) {
       const tag = tags[i].attributes;
-      const taglink = tag2link.find(
-        (element) => element.key == "Key:" + tag.getNamedItem("k").value
-      );
-      tagList[tag.getNamedItem("k").value] = tag.getNamedItem("v").value;
+      const key = tag.getNamedItem("k").value;
+      const value = tag.getNamedItem("v").value;
+
+      const taglink = tag2link.find((element) => element.key == "Key:" + key);
+      tagList[key] = value;
 
       const tr = document.createElement("tr");
       table.appendChild(tr);
 
       const keytd = document.createElement("td");
-      keytd.innerText = tag.getNamedItem("k").value;
+      keytd.innerText = key;
       tr.appendChild(keytd);
 
       const valtd = document.createElement("td");
       if (taglink) {
-        const vala = document.createElement("a");
-        vala.href = taglink.url.replace("$1", tag.getNamedItem("v").value);
-        vala.innerText = tag.getNamedItem("v").value;
-        vala.target = "_blank";
-        valtd.appendChild(vala);
+        const valueList = value.split(";");
+        for (let j = 0; j < valueList.length; j++) {
+          const vala = document.createElement("a");
+          vala.href = taglink.url.replace("$1", valueList[j].trim());
+          vala.innerText += valueList[j].trim();
+          vala.target = "_blank";
+          valtd.appendChild(vala);
+          if (j > 0) {
+            const seperatorText = document.createTextNode("; ");
+            vala.parentNode.insertBefore(seperatorText, vala);
+          }
+        }
       } else {
-        valtd.innerText = tag.getNamedItem("v").value;
+        valtd.innerText = value;
       }
       tr.appendChild(valtd);
 
@@ -381,7 +389,7 @@ function setWikidata(wikidata) {
       wikidata.join("; ");
   } else {
     // Create new one
-    const key = { $: { k: "name:etymology:wikidata", v: wikidata.join("; ")} };
+    const key = { $: { k: "name:etymology:wikidata", v: wikidata.join("; ") } };
     originalXMLasObject["osm"][type][0]["tag"].push(key);
   }
 }
@@ -408,9 +416,9 @@ function updateObjects(err, res) {
     console.log("Changeset number: " + changesetId);
 
     // Set WikiData value
-    let wikiDataList = [];
-    for (let i=0; i<wikidataDropdown.selectedOptions.length; i++){
-      wikiDataList.push(wikidataDropdown.selectedOptions[i].value)
+    const wikiDataList = [];
+    for (let i = 0; i < wikidataDropdown.selectedOptions.length; i++) {
+      wikiDataList.push(wikidataDropdown.selectedOptions[i].value);
     }
     setWikidata(wikiDataList);
 
