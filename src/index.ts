@@ -146,13 +146,27 @@ function stripName(name: string) {
 // Option selector
 function setOption(selectElement: HTMLSelectElement, value: string) {
   const options = selectElement.options;
-  for (let i = 0, optionsLength = options.length; i < optionsLength; i++) {
+  for (let i = 0; i < options.length; i++) {
     if (options[i].value == value) {
       selectElement.selectedIndex = i;
       return true;
     }
   }
   return false;
+}
+function setMultipleOptions(
+  selectElement: HTMLSelectElement,
+  values: Array<string>
+) {
+  const options = selectElement.options;
+  var success = false;
+  for (let i = 0; i < options.length; i++) {
+    if (values.includes(options[i].value)) {
+      options[i].selected = true;
+      var success = true;
+    }
+  }
+  return success;
 }
 
 // Get element
@@ -173,7 +187,7 @@ function getElement(type: string, id) {
 function showWikidataResults(
   search: string,
   lang: string,
-  defaultOption,
+  defaultOptions,
   page = 1
 ) {
   const start = page * 20 - 20;
@@ -214,9 +228,9 @@ function showWikidataResults(
         option.value = results[i].id;
         wikidataDropdown.appendChild(option);
       }
-      if (defaultOption) {
-        setOption(wikidataDropdown, defaultOption);
-        showWikidataDetails(wikidataDropdown.value, languageDropdown.value);
+      if (defaultOptions) {
+        setMultipleOptions(wikidataDropdown, defaultOptions);
+        showWikidataDetails(defaultOptions[0], languageDropdown.value);
       }
     }
   };
@@ -339,11 +353,12 @@ function showElement(err, res: XMLDocument) {
     }
     wikidataSearch.value = name;
     if ("name:etymology:wikidata" in tagList) {
-      showWikidataResults(
-        name,
-        languageDropdown.value,
-        tagList["name:etymology:wikidata"]
-      );
+      // @ts-ignore
+      var values = tagList["name:etymology:wikidata"].split(";");
+      for (let i = 0; i < values.length; i++) {
+        values[i] = values[i].trim();
+      }
+      showWikidataResults(name, languageDropdown.value, values);
     } else {
       showWikidataResults(name, languageDropdown.value, false);
     }
