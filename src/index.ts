@@ -234,57 +234,62 @@ function showWikidataResults(
       }
       if (defaultOptions) {
         setMultipleOptions(wikidataDropdown, defaultOptions);
-        showWikidataDetails(defaultOptions[0], languageDropdown.value);
+        showWikidataDetails(defaultOptions, languageDropdown.value);
       }
     }
   };
 }
 
-function showWikidataDetails(entity: string, lang: string) {
-  const url =
-    "https://www.wikidata.org/wiki/Special:EntityData/" + entity + ".json";
-  const request = new XMLHttpRequest();
-  request.open("GET", url);
-  request.responseType = "json";
-  request.send();
-
-  request.onload = function () {
-    const entityData = request.response.entities[entity];
-    wikidataDetails.innerHTML = "";
-
-    const h1 = document.createElement("h1");
-    h1.innerText = entityData["labels"][lang]["value"];
-    wikidataDetails.appendChild(h1);
-
-    const a = document.createElement("a");
-    a.href = "https://www.wikidata.org/wiki/" + entity;
-    a.target = "_blank";
-    a.innerText = "View on Wikidata";
-    wikidataDetails.appendChild(a);
-
-    const p = document.createElement("p");
-    p.innerText = entityData["descriptions"][lang]["value"];
-    wikidataDetails.appendChild(p);
-
+function showWikidataDetails(entity: Array<string>, lang: string) {
+  wikidataDetails.innerHTML = "";
+  for (let i = 0; i < entity.length; i++) {
     const url =
-      "https://api.allorigins.win/raw?url=" +
-      encodeURIComponent(
-        "https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo&iiprop=url&redirects&format=json&titles=File:" +
-          entityData["claims"]["P18"][0]["mainsnak"]["datavalue"]["value"]
-      );
-    const imgRequest = new XMLHttpRequest();
-    imgRequest.open("GET", url);
-    imgRequest.responseType = "json";
-    imgRequest.send();
+      "https://www.wikidata.org/wiki/Special:EntityData/" + entity[i] + ".json";
+    const request = new XMLHttpRequest();
+    request.open("GET", url);
+    request.responseType = "json";
+    request.send();
 
-    imgRequest.onload = function () {
-      const img = document.createElement("img");
-      const pages = imgRequest.response["query"]["pages"];
-      img.src = pages[Object.keys(pages)[0]]["imageinfo"][0]["url"];
-      img.className = "detail-img";
-      wikidataDetails.appendChild(img);
+    request.onload = function () {
+      const entityData = request.response.entities[entity[i]];
+      const wikidataDetailsDiv = document.createElement("div");
+      wikidataDetailsDiv.className = "wikidata-detail";
+      wikidataDetails.appendChild(wikidataDetailsDiv);
+
+      const h1 = document.createElement("h1");
+      h1.innerText = entityData["labels"][lang]["value"];
+      wikidataDetailsDiv.appendChild(h1);
+
+      const a = document.createElement("a");
+      a.href = "https://www.wikidata.org/wiki/" + entity[i];
+      a.target = "_blank";
+      a.innerText = "View on Wikidata";
+      wikidataDetailsDiv.appendChild(a);
+
+      const p = document.createElement("p");
+      p.innerText = entityData["descriptions"][lang]["value"];
+      wikidataDetailsDiv.appendChild(p);
+
+      const url =
+        "https://api.allorigins.win/raw?url=" +
+        encodeURIComponent(
+          "https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo&iiprop=url&redirects&format=json&titles=File:" +
+            entityData["claims"]["P18"][0]["mainsnak"]["datavalue"]["value"]
+        );
+      const imgRequest = new XMLHttpRequest();
+      imgRequest.open("GET", url);
+      imgRequest.responseType = "json";
+      imgRequest.send();
+
+      imgRequest.onload = function () {
+        const img = document.createElement("img");
+        const pages = imgRequest.response["query"]["pages"];
+        img.src = pages[Object.keys(pages)[0]]["imageinfo"][0]["url"];
+        img.className = "detail-img";
+        wikidataDetailsDiv.appendChild(img);
+      };
     };
-  };
+  }
 }
 
 // Show element
@@ -385,7 +390,13 @@ searchButton.onclick = function () {
 };
 
 wikidataDropdown.onchange = function () {
-  showWikidataDetails(wikidataDropdown.value, languageDropdown.value);
+  const selectedOptions = [];
+  for (let i = 0; i < wikidataDropdown.options.length; i++) {
+    if (wikidataDropdown.options[i].selected) {
+      selectedOptions.push(wikidataDropdown.options[i].value);
+    }
+  }
+  showWikidataDetails(selectedOptions, languageDropdown.value);
 };
 
 // Function to set the wikidata value of object
