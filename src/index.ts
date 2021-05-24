@@ -159,14 +159,18 @@ function setMultipleOptions(
   values: Array<string>
 ) {
   const options = selectElement.options;
-  var success = false;
+  let changedOptions = 0;
   for (let i = 0; i < options.length; i++) {
     if (values.includes(options[i].value)) {
       options[i].selected = true;
-      var success = true;
+      changedOptions += 1;
     }
   }
-  return success;
+  if (changedOptions > 0) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 // Get element
@@ -353,8 +357,7 @@ function showElement(err, res: XMLDocument) {
     }
     wikidataSearch.value = name;
     if ("name:etymology:wikidata" in tagList) {
-      // @ts-ignore
-      var values = tagList["name:etymology:wikidata"].split(";");
+      const values = (<string>tagList["name:etymology:wikidata"]).split(";");
       for (let i = 0; i < values.length; i++) {
         values[i] = values[i].trim();
       }
