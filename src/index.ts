@@ -146,13 +146,31 @@ function stripName(name: string) {
 // Option selector
 function setOption(selectElement: HTMLSelectElement, value: string) {
   const options = selectElement.options;
-  for (let i = 0, optionsLength = options.length; i < optionsLength; i++) {
+  for (let i = 0; i < options.length; i++) {
     if (options[i].value == value) {
       selectElement.selectedIndex = i;
       return true;
     }
   }
   return false;
+}
+function setMultipleOptions(
+  selectElement: HTMLSelectElement,
+  values: Array<string>
+) {
+  const options = selectElement.options;
+  let changedOptions = 0;
+  for (let i = 0; i < options.length; i++) {
+    if (values.includes(options[i].value)) {
+      options[i].selected = true;
+      changedOptions += 1;
+    }
+  }
+  if (changedOptions > 0) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 // Get element
@@ -173,7 +191,7 @@ function getElement(type: string, id) {
 function showWikidataResults(
   search: string,
   lang: string,
-  defaultOption,
+  defaultOptions,
   page = 1
 ) {
   const start = page * 20 - 20;
@@ -214,59 +232,64 @@ function showWikidataResults(
         option.value = results[i].id;
         wikidataDropdown.appendChild(option);
       }
-      if (defaultOption) {
-        setOption(wikidataDropdown, defaultOption);
-        showWikidataDetails(wikidataDropdown.value, languageDropdown.value);
+      if (defaultOptions) {
+        setMultipleOptions(wikidataDropdown, defaultOptions);
+        showWikidataDetails(defaultOptions, languageDropdown.value);
       }
     }
   };
 }
 
-function showWikidataDetails(entity: string, lang: string) {
-  const url =
-    "https://www.wikidata.org/wiki/Special:EntityData/" + entity + ".json";
-  const request = new XMLHttpRequest();
-  request.open("GET", url);
-  request.responseType = "json";
-  request.send();
-
-  request.onload = function () {
-    const entityData = request.response.entities[entity];
-    wikidataDetails.innerHTML = "";
-
-    const h1 = document.createElement("h1");
-    h1.innerText = entityData["labels"][lang]["value"];
-    wikidataDetails.appendChild(h1);
-
-    const a = document.createElement("a");
-    a.href = "https://www.wikidata.org/wiki/" + entity;
-    a.target = "_blank";
-    a.innerText = "View on Wikidata";
-    wikidataDetails.appendChild(a);
-
-    const p = document.createElement("p");
-    p.innerText = entityData["descriptions"][lang]["value"];
-    wikidataDetails.appendChild(p);
-
+function showWikidataDetails(entity: Array<string>, lang: string) {
+  wikidataDetails.innerHTML = "";
+  for (let i = 0; i < entity.length; i++) {
     const url =
-      "https://api.allorigins.win/raw?url=" +
-      encodeURIComponent(
-        "https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo&iiprop=url&redirects&format=json&titles=File:" +
-          entityData["claims"]["P18"][0]["mainsnak"]["datavalue"]["value"]
-      );
-    const imgRequest = new XMLHttpRequest();
-    imgRequest.open("GET", url);
-    imgRequest.responseType = "json";
-    imgRequest.send();
+      "https://www.wikidata.org/wiki/Special:EntityData/" + entity[i] + ".json";
+    const request = new XMLHttpRequest();
+    request.open("GET", url);
+    request.responseType = "json";
+    request.send();
 
-    imgRequest.onload = function () {
-      const img = document.createElement("img");
-      const pages = imgRequest.response["query"]["pages"];
-      img.src = pages[Object.keys(pages)[0]]["imageinfo"][0]["url"];
-      img.className = "detail-img";
-      wikidataDetails.appendChild(img);
+    request.onload = function () {
+      const entityData = request.response.entities[entity[i]];
+      const wikidataDetailsDiv = document.createElement("div");
+      wikidataDetailsDiv.className = "wikidata-detail";
+      wikidataDetails.appendChild(wikidataDetailsDiv);
+
+      const h1 = document.createElement("h1");
+      h1.innerText = entityData["labels"][lang]["value"];
+      wikidataDetailsDiv.appendChild(h1);
+
+      const a = document.createElement("a");
+      a.href = "https://www.wikidata.org/wiki/" + entity[i];
+      a.target = "_blank";
+      a.innerText = "View on Wikidata";
+      wikidataDetailsDiv.appendChild(a);
+
+      const p = document.createElement("p");
+      p.innerText = entityData["descriptions"][lang]["value"];
+      wikidataDetailsDiv.appendChild(p);
+
+      const url =
+        "https://api.allorigins.win/raw?url=" +
+        encodeURIComponent(
+          "https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo&iiprop=url&redirects&format=json&titles=File:" +
+            entityData["claims"]["P18"][0]["mainsnak"]["datavalue"]["value"]
+        );
+      const imgRequest = new XMLHttpRequest();
+      imgRequest.open("GET", url);
+      imgRequest.responseType = "json";
+      imgRequest.send();
+
+      imgRequest.onload = function () {
+        const img = document.createElement("img");
+        const pages = imgRequest.response["query"]["pages"];
+        img.src = pages[Object.keys(pages)[0]]["imageinfo"][0]["url"];
+        img.className = "detail-img";
+        wikidataDetailsDiv.appendChild(img);
+      };
     };
-  };
+  }
 }
 
 // Show element
@@ -294,27 +317,35 @@ function showElement(err, res: XMLDocument) {
     table.innerHTML = "";
     for (let i = 0; i < tags.length; i++) {
       const tag = tags[i].attributes;
-      const taglink = tag2link.find(
-        (element) => element.key == "Key:" + tag.getNamedItem("k").value
-      );
-      tagList[tag.getNamedItem("k").value] = tag.getNamedItem("v").value;
+      const key = tag.getNamedItem("k").value;
+      const value = tag.getNamedItem("v").value;
+
+      const taglink = tag2link.find((element) => element.key == "Key:" + key);
+      tagList[key] = value;
 
       const tr = document.createElement("tr");
       table.appendChild(tr);
 
       const keytd = document.createElement("td");
-      keytd.innerText = tag.getNamedItem("k").value;
+      keytd.innerText = key;
       tr.appendChild(keytd);
 
       const valtd = document.createElement("td");
       if (taglink) {
-        const vala = document.createElement("a");
-        vala.href = taglink.url.replace("$1", tag.getNamedItem("v").value);
-        vala.innerText = tag.getNamedItem("v").value;
-        vala.target = "_blank";
-        valtd.appendChild(vala);
+        const valueList = value.split(";");
+        for (let j = 0; j < valueList.length; j++) {
+          const vala = document.createElement("a");
+          vala.href = taglink.url.replace("$1", valueList[j].trim());
+          vala.innerText += valueList[j].trim();
+          vala.target = "_blank";
+          valtd.appendChild(vala);
+          if (j > 0) {
+            const seperatorText = document.createTextNode("; ");
+            vala.parentNode.insertBefore(seperatorText, vala);
+          }
+        }
       } else {
-        valtd.innerText = tag.getNamedItem("v").value;
+        valtd.innerText = value;
       }
       tr.appendChild(valtd);
 
@@ -331,11 +362,11 @@ function showElement(err, res: XMLDocument) {
     }
     wikidataSearch.value = name;
     if ("name:etymology:wikidata" in tagList) {
-      showWikidataResults(
-        name,
-        languageDropdown.value,
-        tagList["name:etymology:wikidata"]
-      );
+      const values = (<string>tagList["name:etymology:wikidata"]).split(";");
+      for (let i = 0; i < values.length; i++) {
+        values[i] = values[i].trim();
+      }
+      showWikidataResults(name, languageDropdown.value, values);
     } else {
       showWikidataResults(name, languageDropdown.value, false);
     }
@@ -359,7 +390,13 @@ searchButton.onclick = function () {
 };
 
 wikidataDropdown.onchange = function () {
-  showWikidataDetails(wikidataDropdown.value, languageDropdown.value);
+  const selectedOptions = [];
+  for (let i = 0; i < wikidataDropdown.options.length; i++) {
+    if (wikidataDropdown.options[i].selected) {
+      selectedOptions.push(wikidataDropdown.options[i].value);
+    }
+  }
+  showWikidataDetails(selectedOptions, languageDropdown.value);
 };
 
 // Function to set the wikidata value of object
@@ -378,10 +415,10 @@ function setWikidata(wikidata) {
   if (wikidataNumber) {
     // Update existing one
     originalXMLasObject["osm"][type][0]["tag"][wikidataNumber]["$"]["v"] =
-      wikidata;
+      wikidata.join("; ");
   } else {
     // Create new one
-    const key = { $: { k: "name:etymology:wikidata", v: wikidata } };
+    const key = { $: { k: "name:etymology:wikidata", v: wikidata.join("; ") } };
     originalXMLasObject["osm"][type][0]["tag"].push(key);
   }
 }
@@ -408,7 +445,11 @@ function updateObjects(err, res) {
     console.log("Changeset number: " + changesetId);
 
     // Set WikiData value
-    setWikidata(wikidataDropdown.value);
+    const wikiDataList = [];
+    for (let i = 0; i < wikidataDropdown.selectedOptions.length; i++) {
+      wikiDataList.push(wikidataDropdown.selectedOptions[i].value);
+    }
+    setWikidata(wikiDataList);
 
     // Set changeset id
     originalXMLasObject["osm"][type][0]["$"]["changeset"] = changesetId;
