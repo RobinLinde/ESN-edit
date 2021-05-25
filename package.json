@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "bootstrap": "5.0.1",
-    "osm-auth": "1.1.0",
+    "osm-auth": "1.1.1",
     "tag2link": "2021.3.21",
     "xml2js": "0.4.23"
   },
