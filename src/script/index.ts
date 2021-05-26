@@ -6,6 +6,12 @@ import xml2js from "xml2js";
 import tag2link from "tag2link";
 import osmAuth from "osm-auth";
 
+import wikidataDetails from "./wikidata/details";
+import wikidataResults from "./wikidata/search";
+
+import stripName from "./name";
+import populateDropdown from "./dropdown";
+
 // Main elements
 const alertBox = document.getElementById("alertBox");
 
@@ -18,7 +24,9 @@ closeButton.setAttribute("aria-label", "Close");
 const editorInterface = document.getElementById("editorInterface");
 const searchInterface = document.getElementById("searchInterface");
 
-const wikidataDetails = document.getElementById("wikidata-details");
+const wikidataDetailsDiv = <HTMLDivElement>(
+  document.getElementById("wikidata-details")
+);
 
 const languageDropdown = <HTMLSelectElement>(
   document.getElementById("lang-select")
@@ -108,41 +116,6 @@ logoutLink.onclick = () => {
   update();
 };
 
-// Name Stripper
-function stripName(name: string) {
-  const commonWords = [
-    new RegExp("^Avenue de la"),
-    new RegExp("^Avenue des"),
-    new RegExp("^Avenue de"),
-    new RegExp("^Avenue d'"),
-    new RegExp("^Avenue"),
-    new RegExp("^Boulevard"),
-    new RegExp("laan$"),
-    new RegExp("lei$"),
-    new RegExp("-platz$", "i"),
-    new RegExp("platz$", "i"),
-    new RegExp("plein$"),
-    new RegExp("^Rue de la"),
-    new RegExp("^Rue des"),
-    new RegExp("^Rue de"),
-    new RegExp("^Rue du"),
-    new RegExp("^Rue d'"),
-    new RegExp("^Rue"),
-    new RegExp("singel$"),
-    new RegExp("straat$"),
-    new RegExp("-strasse$", "i"),
-    new RegExp("strasse$", "i"),
-    new RegExp("-straße$", "i"),
-    new RegExp("straße$", "i"),
-    new RegExp("weg$"),
-  ];
-  let output = name;
-  for (let i = 0; i < commonWords.length; i++) {
-    output = output.replace(commonWords[i], "");
-  }
-  return output;
-}
-
 // Option selector
 function setOption(selectElement: HTMLSelectElement, value: string) {
   const options = selectElement.options;
@@ -153,24 +126,6 @@ function setOption(selectElement: HTMLSelectElement, value: string) {
     }
   }
   return false;
-}
-function setMultipleOptions(
-  selectElement: HTMLSelectElement,
-  values: Array<string>
-) {
-  const options = selectElement.options;
-  let changedOptions = 0;
-  for (let i = 0; i < options.length; i++) {
-    if (values.includes(options[i].value)) {
-      options[i].selected = true;
-      changedOptions += 1;
-    }
-  }
-  if (changedOptions > 0) {
-    return true;
-  } else {
-    return false;
-  }
 }
 
 // Get element
@@ -184,111 +139,6 @@ function getElement(type: string, id) {
       },
       showElement
     );
-  }
-}
-
-// Function to show Wikidata items
-function showWikidataResults(
-  search: string,
-  lang: string,
-  defaultOptions,
-  page = 1
-) {
-  const start = page * 20 - 20;
-  const url =
-    "https://www.wikidata.org/w/api.php?action=wbsearchentities&search=" +
-    search +
-    "&language=" +
-    lang +
-    "&limit=20&continue=" +
-    start +
-    "&format=json&uselang=" +
-    lang +
-    "&type=item&origin=*";
-  const request = new XMLHttpRequest();
-  request.open("GET", url);
-  request.responseType = "json";
-  request.send();
-
-  request.onload = function () {
-    const requestData = request.response;
-    const results = requestData.search;
-    wikidataDropdown.innerHTML = "";
-
-    if (results.length == 0) {
-      wikidataDropdown.disabled = true;
-      const wikidataAlert = document.createElement("div");
-      wikidataAlert.innerText = "Error: no results found";
-      wikidataAlert.className =
-        "alert alert-warning alert-dismissible fade show";
-      wikidataAlert.appendChild(closeButton);
-      alertBox.appendChild(wikidataAlert);
-    } else {
-      wikidataDropdown.disabled = false;
-      for (let i = 0; i < results.length; i++) {
-        const option = document.createElement("option");
-        option.innerHTML =
-          results[i].label + " (" + results[i].description + ")";
-        option.value = results[i].id;
-        wikidataDropdown.appendChild(option);
-      }
-      if (defaultOptions) {
-        setMultipleOptions(wikidataDropdown, defaultOptions);
-        showWikidataDetails(defaultOptions, languageDropdown.value);
-      }
-    }
-  };
-}
-
-function showWikidataDetails(entity: Array<string>, lang: string) {
-  wikidataDetails.innerHTML = "";
-  for (let i = 0; i < entity.length; i++) {
-    const url =
-      "https://www.wikidata.org/wiki/Special:EntityData/" + entity[i] + ".json";
-    const request = new XMLHttpRequest();
-    request.open("GET", url);
-    request.responseType = "json";
-    request.send();
-
-    request.onload = function () {
-      const entityData = request.response.entities[entity[i]];
-      const wikidataDetailsDiv = document.createElement("div");
-      wikidataDetailsDiv.className = "wikidata-detail";
-      wikidataDetails.appendChild(wikidataDetailsDiv);
-
-      const h1 = document.createElement("h1");
-      h1.innerText = entityData["labels"][lang]["value"];
-      wikidataDetailsDiv.appendChild(h1);
-
-      const a = document.createElement("a");
-      a.href = "https://www.wikidata.org/wiki/" + entity[i];
-      a.target = "_blank";
-      a.innerText = "View on Wikidata";
-      wikidataDetailsDiv.appendChild(a);
-
-      const p = document.createElement("p");
-      p.innerText = entityData["descriptions"][lang]["value"];
-      wikidataDetailsDiv.appendChild(p);
-
-      const url =
-        "https://api.allorigins.win/raw?url=" +
-        encodeURIComponent(
-          "https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo&iiprop=url&redirects&format=json&titles=File:" +
-            entityData["claims"]["P18"][0]["mainsnak"]["datavalue"]["value"]
-        );
-      const imgRequest = new XMLHttpRequest();
-      imgRequest.open("GET", url);
-      imgRequest.responseType = "json";
-      imgRequest.send();
-
-      imgRequest.onload = function () {
-        const img = document.createElement("img");
-        const pages = imgRequest.response["query"]["pages"];
-        img.src = pages[Object.keys(pages)[0]]["imageinfo"][0]["url"];
-        img.className = "detail-img";
-        wikidataDetailsDiv.appendChild(img);
-      };
-    };
   }
 }
 
@@ -366,9 +216,32 @@ function showElement(err, res: XMLDocument) {
       for (let i = 0; i < values.length; i++) {
         values[i] = values[i].trim();
       }
-      showWikidataResults(name, languageDropdown.value, values);
+      wikidataResults(name, languageDropdown.value, 1, function (err, res) {
+        if (!err) {
+          const values = (<string>tagList["name:etymology:wikidata"]).split(
+            ";"
+          );
+          for (let i = 0; i < values.length; i++) {
+            values[i] = values[i].trim();
+          }
+          if (res.length > 0) {
+            populateDropdown(res, wikidataDropdown, values);
+            wikidataDetails(values, languageDropdown.value, wikidataDetailsDiv);
+          } else {
+            wikidataDropdown.disabled = true;
+            wikidataDropdown.innerHTML = "";
+            wikidataDetailsDiv.innerHTML = "";
+            const wikidataAlert = document.createElement("div");
+            wikidataAlert.innerText = "Error: no results found";
+            wikidataAlert.className =
+              "alert alert-warning alert-dismissible fade show";
+            wikidataAlert.appendChild(closeButton);
+            alertBox.appendChild(wikidataAlert);
+          }
+        }
+      });
     } else {
-      showWikidataResults(name, languageDropdown.value, false);
+      wikidataResults(name, languageDropdown.value, 1, dropdown);
     }
   } else {
     const alert = document.createElement("div");
@@ -379,14 +252,33 @@ function showElement(err, res: XMLDocument) {
   }
 }
 
+// Dropdown callback
+function dropdown(err, res) {
+  if (!err) {
+    if (res.length > 0) {
+      populateDropdown(res, wikidataDropdown, []);
+    } else {
+      wikidataDropdown.disabled = true;
+      wikidataDropdown.innerHTML = "";
+      wikidataDetailsDiv.innerHTML = "";
+      const wikidataAlert = document.createElement("div");
+      wikidataAlert.innerText = "Error: no results found";
+      wikidataAlert.className =
+        "alert alert-warning alert-dismissible fade show";
+      wikidataAlert.appendChild(closeButton);
+      alertBox.appendChild(wikidataAlert);
+    }
+  }
+}
+
 // Redo search on change of language
 languageDropdown.onchange = function () {
-  showWikidataResults(wikidataSearch.value, languageDropdown.value, false);
+  wikidataResults(wikidataSearch.value, languageDropdown.value, 1, dropdown);
 };
 
-// Execture search
+// Execute search
 searchButton.onclick = function () {
-  showWikidataResults(wikidataSearch.value, languageDropdown.value, false);
+  wikidataResults(wikidataSearch.value, languageDropdown.value, 1, dropdown);
 };
 
 wikidataDropdown.onchange = function () {
@@ -396,7 +288,7 @@ wikidataDropdown.onchange = function () {
       selectedOptions.push(wikidataDropdown.options[i].value);
     }
   }
-  showWikidataDetails(selectedOptions, languageDropdown.value);
+  wikidataDetails(selectedOptions, languageDropdown.value, wikidataDetailsDiv);
 };
 
 // Function to set the wikidata value of object
