@@ -4,22 +4,17 @@ import "bootstrap/js/dist/alert";
 import { parseString } from "xml2js";
 import xml2js from "xml2js";
 import tag2link from "tag2link";
-import osmAuth from "osm-auth";
 
 import wikidataDetails from "./wikidata/details";
 import wikidataResults from "./wikidata/search";
 
+import showAlert from "./alert";
+import auth from "./auth";
 import stripName from "./name";
 import populateDropdown from "./dropdown";
 
 // Main elements
-const alertBox = document.getElementById("alertBox");
-
-const closeButton = document.createElement("button");
-closeButton.type = "button";
-closeButton.className = "btn-close";
-closeButton.setAttribute("data-bs-dismiss", "alert");
-closeButton.setAttribute("aria-label", "Close");
+const alertBox = <HTMLDivElement>document.getElementById("alertBox");
 
 const editorInterface = document.getElementById("editorInterface");
 const searchInterface = document.getElementById("searchInterface");
@@ -42,11 +37,7 @@ const wikidataSearch = <HTMLInputElement>(
 const addButton = document.getElementById("addButton");
 const searchButton = document.getElementById("searchButton");
 
-const loginItem = document.getElementById("login-item");
-const loginLink = document.getElementById("login-link");
-
-const logoutItem = document.getElementById("logout-item");
-const logoutLink = document.getElementById("logout-link");
+const authLink = document.getElementById("auth");
 
 // Editor parameters
 const queryString = window.location.search;
@@ -59,34 +50,31 @@ const table = document.getElementById("tagTable");
 
 const baseUrl = process.env.BASE_URL || "";
 
-// Authentication
-// @ts-expect-error: Typescript expects the new keyword here but thats breaks the code
-const auth = osmAuth({
-  oauth_consumer_key: process.env.CONSUMER_KEY || "",
-  oauth_secret: process.env.CONSUMER_SECRET || "",
-  url: baseUrl,
-});
-
-// Login link
-loginLink.onclick = () => {
-  if (!auth.bringPopupWindowToFront()) {
-    auth.authenticate(function () {
-      update();
-    });
+// Auth link
+authLink.onclick = function () {
+  if (auth.authenticated()) {
+    //Logout
+    auth.logout();
+    update();
+  } else {
+    //Login
+    if (!auth.bringPopupWindowToFront()) {
+      auth.authenticate(function () {
+        update();
+      });
+    }
   }
 };
 
-// Update page based on auth state
-let loginAlert: HTMLDivElement;
+let loginAlert;
+// Authentication update
 function update() {
   if (auth.authenticated()) {
     // User logged in
-    loginItem.style.display = "none";
-    logoutItem.style.display = "block";
-
     if (loginAlert) {
       loginAlert.remove();
     }
+    authLink.innerText = "Logout";
 
     if (type && id) {
       getElement(type, id);
@@ -95,26 +83,18 @@ function update() {
     }
   } else {
     // User logged out
-    loginItem.style.display = "block";
-    logoutItem.style.display = "none";
-
-    loginAlert = document.createElement("div");
-    loginAlert.innerText =
-      "You're not logged in yet, please log in to continue";
-    loginAlert.className = "alert alert-primary";
-    alertBox.appendChild(loginAlert);
+    loginAlert = showAlert(
+      alertBox,
+      "primary",
+      "You're not logged in yet, please log in to continue"
+    );
+    authLink.innerText = "Login";
 
     editorInterface.style.display = "none";
     searchInterface.style.display = "none";
   }
 }
 update();
-
-// Logout link
-logoutLink.onclick = () => {
-  auth.logout();
-  update();
-};
 
 // Option selector
 function setOption(selectElement: HTMLSelectElement, value: string) {
@@ -231,12 +211,7 @@ function showElement(err, res: XMLDocument) {
             wikidataDropdown.disabled = true;
             wikidataDropdown.innerHTML = "";
             wikidataDetailsDiv.innerHTML = "";
-            const wikidataAlert = document.createElement("div");
-            wikidataAlert.innerText = "Error: no results found";
-            wikidataAlert.className =
-              "alert alert-warning alert-dismissible fade show";
-            wikidataAlert.appendChild(closeButton);
-            alertBox.appendChild(wikidataAlert);
+            showAlert(alertBox, "warning", "Error: no results found");
           }
         }
       });
@@ -244,11 +219,11 @@ function showElement(err, res: XMLDocument) {
       wikidataResults(name, languageDropdown.value, 1, dropdown);
     }
   } else {
-    const alert = document.createElement("div");
-    alert.innerText = "Error: " + err.status + " - " + err.statusText;
-    alert.className = "alert alert-danger alert-dismissible fade show";
-    alert.appendChild(closeButton);
-    alertBox.appendChild(alert);
+    showAlert(
+      alertBox,
+      "danger",
+      "Error: " + err.status + " - " + err.statusText
+    );
   }
 }
 
@@ -261,12 +236,7 @@ function dropdown(err, res) {
       wikidataDropdown.disabled = true;
       wikidataDropdown.innerHTML = "";
       wikidataDetailsDiv.innerHTML = "";
-      const wikidataAlert = document.createElement("div");
-      wikidataAlert.innerText = "Error: no results found";
-      wikidataAlert.className =
-        "alert alert-warning alert-dismissible fade show";
-      wikidataAlert.appendChild(closeButton);
-      alertBox.appendChild(wikidataAlert);
+      showAlert(alertBox, "warning", "Error: no results found");
     }
   }
 }
@@ -361,11 +331,11 @@ function updateObjects(err, res) {
       closeChangeset
     );
   } else {
-    const alert = document.createElement("div");
-    alert.innerText = "Error: " + err.status + " - " + err.statusText;
-    alert.className = "alert alert-danger alert-dismissible fade show";
-    alert.appendChild(closeButton);
-    alertBox.appendChild(alert);
+    showAlert(
+      alertBox,
+      "danger",
+      "Error: " + err.status + " - " + err.statusText
+    );
   }
 }
 
@@ -380,29 +350,29 @@ function closeChangeset(err) {
       giveFeedback
     );
   } else {
-    const alert = document.createElement("div");
-    alert.innerText = "Error: " + err.status + " - " + err.statusText;
-    alert.className = "alert alert-danger alert-dismissible fade show";
-    alert.appendChild(closeButton);
-    alertBox.appendChild(alert);
+    showAlert(
+      alertBox,
+      "danger",
+      "Error: " + err.status + " - " + err.statusText
+    );
   }
 }
 
 // Give some feedback to the user
 function giveFeedback(err) {
   if (!err) {
-    const alert = document.createElement("div");
-    alert.innerHTML =
+    showAlert(
+      alertBox,
+      "success",
       'Success, your changes are uploaded in changeset <a href="' +
-      baseUrl +
-      "/changeset/" +
-      changesetId +
-      '" class="alert-link" target="_blank">' +
-      changesetId +
-      "</a>.";
-    alert.className = "alert alert-success alert-dismissible fade show";
-    alert.appendChild(closeButton);
-    alertBox.appendChild(alert);
+        baseUrl +
+        "/changeset/" +
+        changesetId +
+        '" class="alert-link" target="_blank">' +
+        changesetId +
+        "</a>.",
+      false
+    );
 
     if (closeOnSucess) {
       setTimeout(() => {
@@ -412,10 +382,10 @@ function giveFeedback(err) {
 
     getElement(type, id);
   } else {
-    const alert = document.createElement("div");
-    alert.innerText = "Error: " + err.status + " - " + err.statusText;
-    alert.className = "alert alert-danger alert-dismissible fade show";
-    alert.appendChild(closeButton);
-    alertBox.appendChild(alert);
+    showAlert(
+      alertBox,
+      "danger",
+      "Error: " + err.status + " - " + err.statusText
+    );
   }
 }
