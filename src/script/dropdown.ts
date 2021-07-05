@@ -13,6 +13,7 @@ export default function (
     dropdown.disabled = true;
   } else {
     dropdown.disabled = false;
+    dropdown.innerHTML = "";
     for (let i = 0; i < results.length; i++) {
       const result = results[i] as Result;
       const option = document.createElement("option");
